@@ -10,16 +10,34 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { MobileNav } from "./mobile-nav";
+import { auth, signOut } from "@/auth";
+import { User, Settings, LogOut, LayoutDashboard } from "lucide-react";
+import { ModeToggle } from "./mode-toggle";
 
-export function Header() {
+export async function Header() {
+  const session = await auth();
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
       <div className="container flex h-16 items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-          DevLink
-        </Link>
-        <NavigationMenu>
+        <div className="flex items-center gap-2">
+          <MobileNav />
+          <Link href="/" className="flex items-center gap-2 font-bold text-xl">
+            DevLink
+          </Link>
+        </div>
+        <NavigationMenu className="hidden md:block">
           <NavigationMenuList>
             <NavigationMenuItem>
               <NavigationMenuTrigger>Features</NavigationMenuTrigger>
@@ -60,26 +78,102 @@ export function Header() {
               </NavigationMenuContent>
             </NavigationMenuItem>
             <NavigationMenuItem>
-              <Link href="/projects" legacyBehavior passHref>
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+              <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
+                <Link href="/projects">
                   Browse Projects
-                </NavigationMenuLink>
-              </Link>
+                </Link>
+              </NavigationMenuLink>
             </NavigationMenuItem>
             <NavigationMenuItem>
-              <Link href="/developers" legacyBehavior passHref>
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+              <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
+                <Link href="/developers">
                   Find Developers
-                </NavigationMenuLink>
-              </Link>
+                </Link>
+              </NavigationMenuLink>
             </NavigationMenuItem>
+            {session && (
+              <NavigationMenuItem>
+                <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
+                  <Link href="/dashboard">
+                    Dashboard
+                  </Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+            )}
           </NavigationMenuList>
         </NavigationMenu>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
-            Log in
-          </Button>
-          <Button size="sm">Sign up</Button>
+
+        {/* Right side - Authentication */}
+        <div className="hidden md:flex items-center gap-2">
+          <ModeToggle />
+          {session ? (
+            // Logged in user menu
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={session.user?.image || ""} alt={session.user?.name || ""} />
+                    <AvatarFallback>
+                      {session.user?.name?.charAt(0) || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">
+                      {session.user?.name}
+                    </p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {session.user?.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard" className="cursor-pointer">
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    <span>Dashboard</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/profile" className="cursor-pointer">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/settings" className="cursor-pointer">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <form action={async () => {
+                    "use server";
+                    await signOut();
+                  }}>
+                    <button type="submit" className="flex w-full cursor-pointer items-center">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Log out</span>
+                    </button>
+                  </form>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            // Not logged in - show login/signup buttons
+            <>
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/auth/sign-in">Log in</Link>
+              </Button>
+              <Button size="sm" asChild>
+                <Link href="/auth/sign-up">Sign up</Link>
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </header>
