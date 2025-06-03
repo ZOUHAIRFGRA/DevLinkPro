@@ -27,48 +27,117 @@ import {
   Building,
 } from "lucide-react";
 import { GitHubAPI, extractSkillsFromRepos } from "@/lib/github";
-import ReactMarkdown, { Components } from 'react-markdown';
+import ReactMarkdown, { Components } from "react-markdown";
 import remarkGfm from "remark-gfm"; // For GitHub Flavored Markdown (tables, strikethrough, etc.)
 import rehypeRaw from "rehype-raw"; // To render HTML inside markdown (use with caution)
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider, // Ensure this is wrapping your app or page layout
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Define custom renderers
 const markdownComponents: Components = {
-  // Target all images
+  // Custom renderer for images
   img: ({ node, src, alt, ...props }) => {
-    // Check if it's likely a badge based on src or alt text
-    const isBadge = (typeof src === 'string' && (src.includes('shields.io') || src.includes('img.shields.io'))) || (typeof alt === 'string' && alt.toLowerCase().includes('badge'));
-
-    if (isBadge) {
+    // Check if it's a shields.io badge
+    if (typeof src === "string" && src.includes("img.shields.io")) {
       return (
         <img
           src={src}
-          alt={alt}
+          alt={alt || "Tech Badge"} // Provide a default alt if missing
           style={{
-            height: '25px', // Or use Tailwind classes
-            margin: '2px 4px',
-            display: 'inline-block',
-            verticalAlign: 'middle',
+            height: "28px", // Adjust height as desired for badges
+            display: "inline-block", // Make them flow inline
+            margin: "2px 4px", // Add some spacing around badges
+            verticalAlign: "middle", // Align them nicely
           }}
-          {...props}
+          {...props} // Pass other props like title if any
         />
       );
     }
-    // For other images, you could use Next/Image or default rendering
-    // For simplicity here, we'll just render a normal img but you could enhance this
-    return <img src={src} alt={alt} {...props} />;
+    // For other images (like GitHub stats, trophies etc.), render them normally
+    // You might want to use Next/Image here for optimization if they are local
+    // or if you know their dimensions. For external dynamic images, <img> is fine.
+    return (
+      <img src={src} alt={alt || ""} {...props} style={{ maxWidth: "100%" }} />
+    ); // Added maxWidth for responsiveness of other images
   },
-  // You might also want to style paragraphs containing only badges differently
-  p: ({node, ...props}: { node?: any; [key: string]: any }) => {
-    // Check if this paragraph primarily contains badges
-    const containsOnlyBadges = node?.children ? Array.from(node.children).every(
-      (child: any) => child.tagName === 'img' && (child.properties?.src?.includes('shields.io') || child.properties?.alt?.toLowerCase().includes('badge'))
-    ) : false;
 
-    if (containsOnlyBadges) {
-      return <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', alignItems: 'center' }} {...props} />;
+  p: ({ node, children, ...props }) => {
+    // Check if this paragraph node contains primarily badge images (shields.io)
+    let isBadgeParagraph = false;
+    if (node && node.children) {
+      isBadgeParagraph = Array.from(node.children).some((childNode: any) => {
+        return (
+          childNode.tagName === "img" &&
+          childNode.properties &&
+          typeof childNode.properties.src === "string" &&
+          childNode.properties.src.includes("img.shields.io")
+        );
+      });
     }
-    return <p {...props} />;
-  }
+
+    if (isBadgeParagraph) {
+      // If it's the paragraph containing the tech stack, render it as a div
+      // with flex layout to allow badges to wrap and align.
+      return (
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap", // Allow badges to wrap to the next line
+            alignItems: "center", // Align badges vertically
+            gap: "4px", // Consistent gap (you had 0px 4px, just 4px is also common for flex gap)
+            marginBottom: "1rem", // Add some space after the badge block
+          }}
+          {...props} // Pass through other props like 'key' if provided by react-markdown
+        >
+          {children}
+        </div>
+      );
+    }
+
+    // For all other paragraphs (NOT badge containers), apply specific Tailwind classes
+    // These classes aim to give more control over paragraph styling than default prose.
+    // Adjust these classes to match your desired look (e.g., GitHub's paragraph styling).
+    return (
+      <p
+        className="my-3 leading-relaxed text-slate-700 dark:text-slate-300" // Example classes
+        {...props}
+      >
+        {children}
+      </p>
+    );
+  },
+
+  h1: ({ node, ...props }) => (
+    <h1
+      className="text-2xl font-semibold my-4 text-slate-900 dark:text-slate-100"
+      {...props}
+    />
+  ),
+  h2: ({ node, ...props }) => (
+    <h2
+      className="text-xl font-semibold my-3 text-slate-800 dark:text-slate-200"
+      {...props}
+    />
+  ),
+  h3: ({ node, ...props }) => (
+    <h3
+      className="text-lg font-semibold my-2 text-slate-700 dark:text-slate-300"
+      {...props}
+    />
+  ),
+
+  a: ({ node, ...props }) => (
+    <a
+      className="text-sky-600 hover:text-sky-700 dark:text-sky-400 dark:hover:text-sky-300"
+      {...props}
+    />
+  ),
+  ul: ({ node, ...props }) => <ul className="list-disc pl-5 my-2" {...props} />,
+  li: ({ node, ...props }) => <li className="my-1" {...props} />,
 };
 async function fetchGitHubProfile(accessToken: string) {
   try {
@@ -88,6 +157,7 @@ async function fetchGitHubProfile(accessToken: string) {
 
     // Extract skills from repositories
     const extractedSkills = extractSkillsFromRepos(repositories);
+    console.log('GitHub User:', githubUser);
 
     // Transform GitHub data to our profile format
     const profile = {
@@ -478,16 +548,16 @@ export default async function ProfilePage() {
               <CardDescription>My GitHub profile introduction</CardDescription>
             </CardHeader>
             <CardContent>
-              {/* Apply prose styling to the container of ReactMarkdown */}
               <div className="prose prose-sm max-w-none dark:prose-invert">
-  <ReactMarkdown
-    components={markdownComponents} // Add this prop
-    remarkPlugins={[remarkGfm]}
-    rehypePlugins={[rehypeRaw]}
-  >
-    {profile.github.profileReadme}
-  </ReactMarkdown>
-</div>
+                <ReactMarkdown
+                  components={markdownComponents} // <-- Add your custom components here
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeRaw]} // rehypeRaw is important for your <br> tags
+                  // rehypePlugins={[rehypeRaw, rehypeHighlight]} // if using syntax highlighting
+                >
+                  {profile.github.profileReadme}
+                </ReactMarkdown>
+              </div>
             </CardContent>
           </Card>
         )}
