@@ -3,6 +3,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import connectDB from "@/lib/mongodb";
+import User from "@/models/user";
 import {
   Card,
   CardContent,
@@ -25,6 +27,7 @@ import {
   GitFork,
   Users,
   Building,
+  Plus,
 } from "lucide-react";
 import { GitHubAPI, extractSkillsFromRepos, fetchPublicGitHubProfile, GitHubRepo } from "@/lib/github";
 import ReactMarkdown, { Components } from "react-markdown";
@@ -180,7 +183,7 @@ async function fetchGitHubProfile(accessToken: string) {
         contributions: contributionStats,
         organizations,
       },
-      skills: extractedSkills,
+      skills: extractedSkills, // GitHub-extracted skills as fallback
       repositories: repositories.slice(0, 10), // Top 10 recent repos
       pinnedRepositories: pinnedRepos,
       socialLinks: {
@@ -198,6 +201,19 @@ async function fetchGitHubProfile(accessToken: string) {
     return profile;
   } catch (error) {
     console.error("Error fetching GitHub profile:", error);
+    return null;
+  }
+}
+
+import type { IUser } from '@/models/user';
+
+async function fetchDatabaseProfile(email: string) {
+  try {
+    await connectDB();
+    const user = await User.findOne({ email }).select('-password').lean() as IUser | null;
+    return user;
+  } catch (error) {
+    console.error("Error fetching database profile:", error);
     return null;
   }
 }
@@ -234,9 +250,33 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         </div>
       );
     }
-    // Fetch own profile with access token
-    profile = await fetchGitHubProfile(session.accessToken);
-    console.log('Own Profile:', profile);
+    
+    // Fetch both GitHub and database profiles for own profile
+    const [githubProfile, dbProfile] = await Promise.all([
+      fetchGitHubProfile(session.accessToken),
+      fetchDatabaseProfile(session.user.email!)
+    ]);
+    
+    if (githubProfile) {
+      // Merge database skills with GitHub profile, prioritizing database skills
+      profile = {
+        ...githubProfile,
+        skills: dbProfile?.skills && dbProfile.skills.length > 0 
+          ? dbProfile.skills 
+          : githubProfile.skills,
+        // Also merge other database fields if available
+        bio: dbProfile?.bio || githubProfile.bio,
+        location: dbProfile?.location || githubProfile.location,
+        socialLinks: {
+          ...githubProfile.socialLinks,
+          ...(dbProfile?.socialLinks || {}),
+        },
+      };
+    } else {
+      profile = null;
+    }
+    
+    console.log('Merged Profile:', profile);
   } else {
     // Fetch public profile data
     profile = await fetchPublicGitHubProfile(viewingUsername);
@@ -412,46 +452,66 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         </div>
       </div>
 
-      <div className="grid gap-6">{/* Note: Removed md:grid-cols-2 since we only have repositories now */}
-        {/* Technical Skills from GitHub - Commented out for future reference
+      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+        {/* Technical Skills */}
         <Card>
           <CardHeader>
             <CardTitle>Technical Skills</CardTitle>
             <CardDescription>
-              Skills extracted from GitHub repositories and activity
+              {isOwnProfile ? "Your" : `${profile.name || viewingUsername}'s`} technical skills and proficiency levels
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {profile.skills && profile.skills.length > 0 ? (
-                profile.skills.map((skill: { name: string; level: string }) => (
-                  <div
-                    key={skill.name}
-                    className="flex items-center justify-between"
-                  >
-                    <span className="font-medium">{skill.name}</span>
-                    <Badge
-                      variant={
-                        skill.level === "Expert"
-                          ? "default"
-                          : skill.level === "Advanced"
-                          ? "secondary"
-                          : "outline"
-                      }
+                <div className="grid gap-3">
+                  {profile.skills.map((skill: { name: string; level: string }, index: number) => (
+                    <div
+                      key={`${skill.name}-${index}`}
+                      className="flex items-center justify-between p-3 rounded-lg border bg-muted/50"
                     >
-                      {skill.level}
-                    </Badge>
-                  </div>
-                ))
+                      <span className="font-medium">{skill.name}</span>
+                      <Badge
+                        variant={
+                          skill.level === "Expert"
+                            ? "default"
+                            : skill.level === "Advanced"
+                            ? "secondary"
+                            : "outline"
+                        }
+                        className={
+                          skill.level === "Expert"
+                            ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                            : skill.level === "Advanced"
+                            ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                            : skill.level === "Intermediate"
+                            ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                            : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
+                        }
+                      >
+                        {skill.level}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
               ) : (
-                <p className="text-muted-foreground">
-                  No skills data available
-                </p>
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground mb-4">
+                    {isOwnProfile ? "You haven't added any skills yet" : "No skills listed"}
+                  </p>
+                  {isOwnProfile && (
+                    <Button variant="outline" asChild>
+                      <Link href="/profile/edit">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Skills
+                      </Link>
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
           </CardContent>
         </Card>
-        */}
 
 
 
