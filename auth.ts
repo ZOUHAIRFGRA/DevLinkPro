@@ -74,20 +74,22 @@ export const {
       }
       return true;
     },
-    async jwt({ token, account }) {
+    async jwt({ token, account, profile }) {
       // Store GitHub access token in JWT
       if (account?.provider === 'github') {
         token.accessToken = account.access_token;
         token.githubId = account.providerAccountId;
+        token.githubLogin = profile?.login; // Store GitHub username
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.sub!;
-        // Include access token and GitHub ID in session
+        // Include access token, GitHub ID, and GitHub login in session
         session.accessToken = token.accessToken as string;
         session.githubId = token.githubId as string;
+        session.githubLogin = token.githubLogin as string;
       }
       return session;
     },

@@ -2,28 +2,34 @@
 interface GitHubUser {
   login: string;
   id: number;
-  name: string;
-  email: string;
-  bio: string;
-  location: string;
+  name: string | null;
+  email: string | null;
+  bio: string | null;
+  location: string | null;
   avatar_url: string;
   html_url: string;
-  blog: string;
-  twitter_username: string;
+  blog: string | null;
+  twitter_username: string | null;
   public_repos: number;
   followers: number;
   following: number;
-  company: string;
+  company: string | null;
   created_at: string;
+  plan?: {
+    name: string;
+    space: number;
+    private_repos: number;
+    collaborators: number;
+  }; // Plan details, may not be available for public profiles
 }
 
 interface GitHubRepo {
   id: number;
   name: string;
   full_name: string;
-  description: string;
+  description: string | null;
   html_url: string;
-  language: string;
+  language: string | null;
   stargazers_count: number;
   forks_count: number;
   updated_at: string;
@@ -36,20 +42,26 @@ interface GitHubContribution {
 }
 
 export class GitHubAPI {
-  private accessToken: string;
+  private accessToken?: string;
   private baseUrl = 'https://api.github.com';
 
-  constructor(accessToken: string) {
+  constructor(accessToken?: string) {
     this.accessToken = accessToken;
   }
 
   private async request(endpoint: string) {
+    const headers: HeadersInit = {
+      'Accept': 'application/vnd.github.v3+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    };
+
+    // Only add authorization header if accessToken is provided
+    if (this.accessToken) {
+      headers['Authorization'] = `Bearer ${this.accessToken}`;
+    }
+
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      headers: {
-        'Authorization': `Bearer ${this.accessToken}`,
-        'Accept': 'application/vnd.github.v3+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-      },
+      headers
     });
 
     if (!response.ok) {
@@ -84,11 +96,17 @@ export class GitHubAPI {
 
   async getProfileReadme(username: string): Promise<string | null> {
     try {
+      const headers: HeadersInit = {
+        'Accept': 'application/vnd.github.v3+json',
+      };
+
+      // Only add authorization header if accessToken is provided
+      if (this.accessToken) {
+        headers['Authorization'] = `Bearer ${this.accessToken}`;
+      }
+
       const response = await fetch(`${this.baseUrl}/repos/${username}/${username}/contents/README.md`, {
-        headers: {
-          'Authorization': `Bearer ${this.accessToken}`,
-          'Accept': 'application/vnd.github.v3+json',
-        },
+        headers,
       });
 
       if (!response.ok) {
@@ -170,3 +188,63 @@ export function extractSkillsFromRepos(repos: GitHubRepo[]): Array<{ name: strin
 }
 
 export type { GitHubUser, GitHubRepo, GitHubContribution };
+
+// Function to fetch public GitHub profile data without authentication
+export async function fetchPublicGitHubProfile(username: string) {
+  try {
+    const github = new GitHubAPI(); // No access token for public requests
+
+    // Fetch public GitHub user data
+    const githubUser = await github.getUserByUsername(username);
+    const repositories = await github.getRepositories(githubUser.login, {
+      per_page: 50,
+    });
+    const pinnedRepos = await github.getPinnedRepositories(githubUser.login);
+    const profileReadme = await github.getProfileReadme(githubUser.login);
+    const contributionStats = await github.getContributionStats(githubUser.login);
+    const organizations = await github.getOrganizations(githubUser.login);
+
+    // Extract skills from repositories
+    const extractedSkills = extractSkillsFromRepos(repositories);
+
+    // Transform GitHub data to our profile format (public data only)
+    const profile = {
+      id: githubUser.id.toString(),
+      name: githubUser.name || githubUser.login,
+      email: githubUser.email, // May be null for privacy
+      image: githubUser.avatar_url,
+      bio: githubUser.bio || "",
+      location: githubUser.location || "",
+      github: {
+        username: githubUser.login,
+        url: githubUser.html_url,
+        publicRepos: githubUser.public_repos,
+        followers: githubUser.followers,
+        following: githubUser.following,
+        company: githubUser.company,
+        createdAt: githubUser.created_at,
+        profileReadme,
+        contributions: contributionStats,
+        organizations,
+      },
+      skills: extractedSkills,
+      repositories: repositories.slice(0, 10), // Top 10 recent repos
+      pinnedRepositories: pinnedRepos,
+      socialLinks: {
+        github: githubUser.html_url,
+        portfolio: githubUser.blog || "",
+        twitter: githubUser.twitter_username
+          ? `https://twitter.com/${githubUser.twitter_username}`
+          : "",
+        linkedin: "", // Not available from GitHub API
+      },
+      joinedDate: githubUser.created_at,
+      plan: githubUser.plan, // May be null for public profiles
+    };
+
+    return profile;
+  } catch (error) {
+    console.error("Error fetching public GitHub profile:", error);
+    return null;
+  }
+}
