@@ -412,8 +412,8 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Technical Skills from GitHub */}
+      <div className="grid gap-6">{/* Note: Removed md:grid-cols-2 since we only have repositories now */}
+        {/* Technical Skills from GitHub - Commented out for future reference
         <Card>
           <CardHeader>
             <CardTitle>Technical Skills</CardTitle>
@@ -451,58 +451,63 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
             </div>
           </CardContent>
         </Card>
+        */}
 
-        {/* Organizations */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Organizations</CardTitle>
-            <CardDescription>
-              GitHub organizations {isOwnProfile ? "I'm" : `${profile.name || viewingUsername} is`} part of
+
+
+        {/* DevLink Projects - Enhanced and Prioritized */}
+        <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/5">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl flex items-center justify-center gap-2">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Building className="w-6 h-6 text-primary" />
+              </div>
+              DevLink Projects
+            </CardTitle>
+            <CardDescription className="text-base">
+              Collaborative projects and innovations {isOwnProfile ? "I've" : `${profile.name || viewingUsername} has`} built within the DevLink community
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {profile.github?.organizations &&
-            profile.github.organizations.length > 0 ? (
-              <div className="space-y-3">
-                {profile.github.organizations
-                  .slice(0, 5)
-                  .map(
-                    (org: {
-                      id: number;
-                      login: string;
-                      avatar_url: string;
-                      description?: string;
-                    }) => (
-                      <div key={org.id} className="flex items-center gap-3">
-                        <Image
-                          src={org.avatar_url}
-                          alt={org.login}
-                          width={32}
-                          height={32}
-                          className="w-8 h-8 rounded-full"
-                        />
-                        <div>
-                          <div className="font-medium">{org.login}</div>
-                          {org.description && (
-                            <div className="text-sm text-muted-foreground">
-                              {org.description}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  )}
+            <div className="text-center py-12">
+              <div className="mb-6">
+                <div className="w-20 h-20 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Building className="w-10 h-10 text-primary" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">
+                  {isOwnProfile ? "Start Your DevLink Journey" : "No Projects Yet"}
+                </h3>
+                <p className="text-muted-foreground max-w-md mx-auto leading-relaxed">
+                  {isOwnProfile 
+                    ? "Create amazing projects, collaborate with developers worldwide, and showcase your innovations to the DevLink community."
+                    : `${profile.name || viewingUsername} hasn't shared any DevLink projects yet. Check back later for exciting collaborations!`
+                  }
+                </p>
               </div>
-            ) : (
-              <p className="text-muted-foreground">No organizations found</p>
-            )}
+              {isOwnProfile && (
+                <div className="space-y-3">
+                  <Button size="lg" className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90" asChild>
+                    <Link href="/dashboard">
+                      <Building className="w-5 h-5 mr-2" />
+                      Explore Dashboard
+                    </Link>
+                  </Button>
+                  <p className="text-sm text-muted-foreground">
+                    Connect with fellow developers and start building together
+                  </p>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
 
-        {/* Recent Repositories */}
-        <Card className="md:col-span-2">
+        {/* Recent Repositories - Enhanced */}
+        <Card className="border-primary/10">
           <CardHeader>
-            <CardTitle>Recent Repositories</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Github className="w-5 h-5" />
+              Recent Repositories
+            </CardTitle>
             <CardDescription>
               {isOwnProfile ? "My" : `${profile.name || viewingUsername}'s`} most recently updated GitHub repositories
             </CardDescription>
@@ -567,11 +572,14 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
           </CardContent>
         </Card>
 
-        {/* Profile README (if available) */}
+        {/* Profile README (if available) - Enhanced */}
         {profile.github?.profileReadme && (
-          <Card className="md:col-span-2">
+          <Card className="border-primary/10">
             <CardHeader>
-              <CardTitle>Profile README</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Github className="w-5 h-5" />
+                Profile README
+              </CardTitle>
               <CardDescription>
                 {isOwnProfile ? "My" : `${profile.name || viewingUsername}'s`} GitHub profile introduction
               </CardDescription>
@@ -590,28 +598,6 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
             </CardContent>
           </Card>
         )}
-
-        {/* DevLink Projects Placeholder */}
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle>DevLink Projects</CardTitle>
-            <CardDescription>
-              Projects {isOwnProfile ? "I've" : `${profile.name || viewingUsername} has`} created or collaborated on within DevLink
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-8">
-              <p className="text-muted-foreground mb-4">
-                No DevLink projects yet. {isOwnProfile ? "Start collaborating!" : ""}
-              </p>
-              {isOwnProfile && (
-                <Button asChild>
-                  <Link href="/dashboard">Go to Dashboard</Link>
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
