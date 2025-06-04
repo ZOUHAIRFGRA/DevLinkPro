@@ -29,7 +29,7 @@ import {
   Building,
   Plus,
 } from "lucide-react";
-import { GitHubAPI, extractSkillsFromRepos, fetchPublicGitHubProfile, GitHubRepo } from "@/lib/github";
+import { GitHubAPI, extractSkillsFromRepos, GitHubRepo } from "@/lib/github";
 import ReactMarkdown, { Components } from "react-markdown";
 import remarkGfm from "remark-gfm"; // For GitHub Flavored Markdown (tables, strikethrough, etc.)
 import rehypeRaw from "rehype-raw"; // To render HTML inside markdown (use with caution)
@@ -218,6 +218,57 @@ async function fetchDatabaseProfile(email: string) {
   }
 }
 
+async function fetchDatabaseProfileByUsername(username: string) {
+  try {
+    await connectDB();
+    const user = await User.findOne({ 
+      'githubData.username': username 
+    }).select('-password').lean() as IUser | null;
+    
+    if (!user || !user.githubData) {
+      return null;
+    }
+
+    // Transform database user to profile format
+    const profile = {
+      id: user.githubId || (user._id as any)?.toString() || user.email,
+      name: user.name,
+      email: user.email,
+      image: user.image,
+      bio: user.bio || "",
+      location: user.location || "",
+      github: {
+        username: user.githubData.username,
+        url: user.githubData.url,
+        publicRepos: user.githubData.publicRepos,
+        followers: user.githubData.followers,
+        following: user.githubData.following,
+        company: user.githubData.company,
+        createdAt: user.githubData.createdAt,
+        profileReadme: user.githubData.profileReadme,
+        contributions: user.githubData.contributions,
+        organizations: user.githubData.organizations,
+      },
+      skills: user.skills || [],
+      repositories: (user.githubData.repositories || []).slice(0, 10),
+      pinnedRepositories: user.githubData.pinnedRepositories || [],
+      socialLinks: user.socialLinks || {
+        github: user.githubData.url,
+        portfolio: "",
+        twitter: "",
+        linkedin: "",
+      },
+      joinedDate: user.githubData.createdAt,
+      plan: null, // Don't expose plan for other users
+    };
+
+    return profile;
+  } catch (error) {
+    console.error("Error fetching database profile by username:", error);
+    return null;
+  }
+}
+
 interface ProfilePageProps {
   params: { username: string };
 }
@@ -278,9 +329,9 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     
     console.log('Merged Profile:', profile);
   } else {
-    // Fetch public profile data
-    profile = await fetchPublicGitHubProfile(viewingUsername);
-    console.log('Public Profile:', profile);
+    // Fetch profile data from database instead of GitHub API
+    profile = await fetchDatabaseProfileByUsername(viewingUsername);
+    console.log('Database Profile:', profile);
   }
 
   if (!profile) {
@@ -288,10 +339,10 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
       <div className="container mx-auto py-8 max-w-4xl">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">
-            Unable to load GitHub profile
+            Profile not found
           </h1>
           <p className="text-muted-foreground mb-4">
-            We couldn&apos;t fetch the GitHub profile data for {viewingUsername}. The user might not exist or their profile might be private.
+            We couldn&apos;t find a profile for {viewingUsername}. The user might not be registered on DevLink or hasn&apos;t set up their profile yet.
           </p>
           <Button asChild>
             <Link href="/dashboard">Go to Dashboard</Link>
@@ -578,7 +629,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                 {profile.repositories
                   .slice(0, 6)
                   .map(
-                    (repo: GitHubRepo) => (
+                    (repo: any) => (
                       <div key={repo.id} className="border rounded-lg p-4">
                         <div className="flex items-start justify-between mb-2">
                           <h3 className="font-semibold">
