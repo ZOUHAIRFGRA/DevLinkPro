@@ -36,6 +36,21 @@ export interface IUser extends mongoose.Document {
     portfolio?: string;
     twitter?: string;
   };
+  githubData?: {
+    username: string;
+    url: string;
+    publicRepos: number;
+    followers: number;
+    following: number;
+    company?: string;
+    createdAt: string;
+    profileReadme?: string;
+    contributions?: Record<string, unknown>;
+    organizations?: Record<string, unknown>[];
+    repositories?: Record<string, unknown>[];
+    pinnedRepositories?: Record<string, unknown>[];
+    lastUpdated: Date;
+  };
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -141,6 +156,21 @@ const userSchema = new mongoose.Schema<IUser>({
     twitter: {
       type: String,
     },
+  },
+  githubData: {
+    username: String,
+    url: String,
+    publicRepos: Number,
+    followers: Number,
+    following: Number,
+    company: String,
+    createdAt: String,
+    profileReadme: String,
+    contributions: mongoose.Schema.Types.Mixed,
+    organizations: [mongoose.Schema.Types.Mixed],
+    repositories: [mongoose.Schema.Types.Mixed],
+    pinnedRepositories: [mongoose.Schema.Types.Mixed],
+    lastUpdated: Date,
   },
 }, {
   timestamps: true,

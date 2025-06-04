@@ -1,58 +1,47 @@
 import { auth } from "@/auth";
-import { GitHubAPI, extractSkillsFromRepos } from "@/lib/github";
+import connectDB from "@/lib/mongodb";
+import User from "@/models/user";
 import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
     const session = await auth();
     
-    if (!session?.accessToken) {
-      return NextResponse.json({ error: "No GitHub access token available" }, { status: 401 });
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const github = new GitHubAPI(session.accessToken);
+    await connectDB();
     
-    // Fetch GitHub user data
-    const githubUser = await github.getUser();
-    const repositories = await github.getRepositories(githubUser.login, { per_page: 50 });
-    const pinnedRepos = await github.getPinnedRepositories(githubUser.login);
-    const profileReadme = await github.getProfileReadme(githubUser.login);
-    const contributionStats = await github.getContributionStats(githubUser.login);
-    const organizations = await github.getOrganizations(githubUser.login);
+    const user = await User.findOne({ email: session.user.email }).select('githubData');
     
-    // Extract skills from repositories
-    const extractedSkills = extractSkillsFromRepos(repositories);
+    if (!user || !user.githubData) {
+      return NextResponse.json({ error: "No GitHub data found. Please refresh your GitHub data first." }, { status: 404 });
+    }
 
-    // Transform GitHub data to our profile format
+    // Return stored GitHub data
     const profile = {
       id: session.user?.id,
-      name: githubUser.name || githubUser.login,
-      email: githubUser.email || session.user?.email,
-      image: githubUser.avatar_url,
-      bio: githubUser.bio || "",
-      location: githubUser.location || "",
+      name: session.user?.name,
+      email: session.user?.email,
       github: {
-        username: githubUser.login,
-        url: githubUser.html_url,
-        publicRepos: githubUser.public_repos,
-        followers: githubUser.followers,
-        following: githubUser.following,
-        company: githubUser.company,
-        createdAt: githubUser.created_at,
-        profileReadme,
-        contributions: contributionStats,
-        organizations,
+        username: user.githubData.username,
+        url: user.githubData.url,
+        publicRepos: user.githubData.publicRepos,
+        followers: user.githubData.followers,
+        following: user.githubData.following,
+        company: user.githubData.company,
+        createdAt: user.githubData.createdAt,
+        profileReadme: user.githubData.profileReadme,
+        contributions: user.githubData.contributions,
+        organizations: user.githubData.organizations,
+        lastUpdated: user.githubData.lastUpdated,
       },
-      skills: extractedSkills,
-      repositories: repositories.slice(0, 10), // Top 10 recent repos
-      pinnedRepositories: pinnedRepos,
-      socialLinks: {
-        github: githubUser.html_url,
-        portfolio: githubUser.blog || "",
-        twitter: githubUser.twitter_username ? `https://twitter.com/${githubUser.twitter_username}` : "",
-        linkedin: "", // Not available from GitHub API
-      },
-      joinedDate: new Date().toISOString(), // Use actual join date from database if available
+      repositories: user.githubData.repositories || [],
+      pinnedRepositories: user.githubData.pinnedRepositories || [],
+      isDataStale: user.githubData.lastUpdated ? 
+        (new Date().getTime() - new Date(user.githubData.lastUpdated).getTime()) > (7 * 24 * 60 * 60 * 1000) : 
+        true,
     };
 
     return NextResponse.json({ profile });
