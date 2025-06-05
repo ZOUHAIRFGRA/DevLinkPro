@@ -17,7 +17,7 @@ export default async function ProjectsPage() {
 
   // Fetch recent public projects
   const projects = await Project.find({ isPublic: true })
-    .populate('owner', 'name email githubData.username githubData.avatar_url')
+    .populate('owner', 'name email image githubData.username')
     .sort({ createdAt: -1 })
     .limit(12)
     .lean();
@@ -97,7 +97,7 @@ export default async function ProjectsPage() {
                 {/* Owner */}
                 <div className="flex items-center gap-2 pt-2 border-t">
                   <Image
-                    src={project.owner.githubData?.avatar_url || '/placeholder-avatar.png'}
+                    src={project.owner.image || '/placeholder-avatar.svg'}
                     alt={project.owner.name}
                     width={24}
                     height={24}

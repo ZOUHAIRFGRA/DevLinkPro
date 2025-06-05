@@ -4,6 +4,7 @@ import "./globals.css";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ThemeProvider } from "@/components/theme-provider";
+import { MinHeightWrapper } from "@/components/ui/min-height-wrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,7 +38,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <Header />
-          <main className="flex-1">{children}</main>
+          <MinHeightWrapper>
+            <main className="flex-1">{children}</main>
+          </MinHeightWrapper>
           <Footer />
         </ThemeProvider>
       </body>

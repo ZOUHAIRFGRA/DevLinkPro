@@ -28,9 +28,9 @@ interface SerializedUser {
   _id: string;
   name: string;
   email: string;
+  image?: string;
   githubData?: {
     username: string;
-    avatar_url: string;
   };
 }
 
@@ -63,12 +63,12 @@ export default async function ProjectDashboard() {
     .populate({
       path: 'applicants.user',
       model: User,
-      select: 'name email githubData.username githubData.avatar_url'
+      select: 'name email image githubData.username'
     })
     .populate({
       path: 'collaborators.user', 
       model: User,
-      select: 'name email githubData.username githubData.avatar_url'
+      select: 'name email image githubData.username'
     })
     .sort({ createdAt: -1 })
     .lean();
@@ -233,7 +233,7 @@ export default async function ProjectDashboard() {
                         {pendingApplicants.map((applicant, index) => (
                           <div key={index} className="flex items-start gap-4 p-4 border rounded-lg">
                             <Image
-                              src={applicant.user.githubData?.avatar_url || '/placeholder-avatar.png'}
+                              src={applicant.user.image || '/placeholder-avatar.svg'}
                               alt={applicant.user.name}
                               width={40}
                               height={40}

@@ -25,9 +25,9 @@ interface SerializedUser {
   _id: string;
   name: string;
   email: string;
+  image?: string;
   githubData?: {
     username: string;
-    avatar_url: string;
   };
 }
 
@@ -83,16 +83,16 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
   // Fetch project with populated data
   const project = await Project.findById(params.id)
-    .populate('owner', 'name email githubData.username githubData.avatar_url')
+    .populate('owner', 'name email image githubData.username')
     .populate({
       path: 'applicants.user',
       model: User,
-      select: 'name email githubData.username githubData.avatar_url'
+      select: 'name email image githubData.username'
     })
     .populate({
       path: 'collaborators.user',
       model: User,
-      select: 'name email githubData.username githubData.avatar_url'
+      select: 'name email image githubData.username'
     })
     .lean();
 
@@ -114,7 +114,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   );
 
   const activeRoles = serializedProject.rolesNeeded.filter(role => role.isActive);
-
+  console.log('serializedProject', serializedProject);
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
@@ -164,7 +164,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
           <CardContent>
             <div className="flex items-center gap-3">
               <Image
-                src={serializedProject.owner.githubData?.avatar_url || '/placeholder-avatar.png'}
+                src={serializedProject.owner.image || '/placeholder-avatar.svg'}
                 alt={serializedProject.owner.name}
                 width={48}
                 height={48}
@@ -385,7 +385,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                       .map((collaborator, index) => (
                       <div key={index} className="flex items-center gap-3">
                         <Image
-                          src={collaborator.user.githubData?.avatar_url || '/placeholder-avatar.png'}
+                          src={collaborator.user.image || '/placeholder-avatar.svg'}
                           alt={collaborator.user.name}
                           width={32}
                           height={32}

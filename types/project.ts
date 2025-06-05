@@ -13,9 +13,9 @@ export interface SerializedProject {
     _id: string;
     name: string;
     email: string;
+    image?: string;
     githubData?: {
       username: string;
-      avatar_url: string;
     };
   };
   rolesNeeded: {
