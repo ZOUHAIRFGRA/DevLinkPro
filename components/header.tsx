@@ -22,7 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { MobileNav } from "./mobile-nav";
 import { auth, signOut } from "@/auth";
-import { User, Settings, LogOut, LayoutDashboard } from "lucide-react";
+import { User, Settings, LogOut, LayoutDashboard, Target } from "lucide-react";
 import { ModeToggle } from "./mode-toggle";
 
 export async function Header() {
@@ -135,6 +135,12 @@ export async function Header() {
                   <Link href="/dashboard" className="cursor-pointer">
                     <LayoutDashboard className="mr-2 h-4 w-4" />
                     <span>Dashboard</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/projects" className="cursor-pointer">
+                    <Target className="mr-2 h-4 w-4" />
+                    <span>My Projects</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
