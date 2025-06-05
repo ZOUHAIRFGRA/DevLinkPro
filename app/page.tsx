@@ -7,7 +7,7 @@ export default function Home() {
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
       <section className="flex-1 flex items-center justify-center bg-gradient-to-br from-background to-muted/50 py-12 md:py-24 lg:py-32">
-        <div className="container px-4 md:px-6">
+        <div className="container px-4 md:px-6 lg:px-8">
           <div className="flex flex-col items-center space-y-4 text-center">
             <div className="space-y-2">
               <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl/none">
@@ -31,7 +31,7 @@ export default function Home() {
 
       {/* Features Section */}
       <section className="py-12 md:py-24 lg:py-32">
-        <div className="container px-4 md:px-6">
+        <div className="container px-4 md:px-6 lg:px-8">
           <h2 className="text-3xl font-bold tracking-tighter text-center mb-12">
             Why Choose DevLink?
           </h2>
@@ -81,7 +81,7 @@ export default function Home() {
 
       {/* CTA Section */}
       <section className="py-12 md:py-24 lg:py-32 bg-muted/50">
-        <div className="container px-4 md:px-6">
+        <div className="container px-4 md:px-6 lg:px-8">
           <div className="flex flex-col items-center space-y-4 text-center">
             <div className="space-y-2">
               <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
