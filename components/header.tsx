@@ -22,7 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { MobileNav } from "./mobile-nav";
 import { auth, signOut } from "@/auth";
-import { User, Settings, LogOut, LayoutDashboard, Target } from "lucide-react";
+import { User, Settings, LogOut, LayoutDashboard, Target, Search, Heart } from "lucide-react";
 import { ModeToggle } from "./mode-toggle";
 
 export async function Header() {
@@ -84,21 +84,37 @@ export async function Header() {
                 </Link>
               </NavigationMenuLink>
             </NavigationMenuItem>
-            <NavigationMenuItem>
+            {/* <NavigationMenuItem>
               <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
                 <Link href="/developers">
                   Find Developers
                 </Link>
               </NavigationMenuLink>
-            </NavigationMenuItem>
+            </NavigationMenuItem> */}
             {session && (
-              <NavigationMenuItem>
-                <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
-                  <Link href="/dashboard">
-                    Dashboard
-                  </Link>
-                </NavigationMenuLink>
-              </NavigationMenuItem>
+              <>
+                <NavigationMenuItem>
+                  <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
+                    <Link href="/discovery">
+                      Discovery
+                    </Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+                <NavigationMenuItem>
+                  <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
+                    <Link href="/matches">
+                      Matches
+                    </Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+                <NavigationMenuItem>
+                  <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
+                    <Link href="/dashboard">
+                      Dashboard
+                    </Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+              </>
             )}
           </NavigationMenuList>
         </NavigationMenu>
@@ -135,6 +151,18 @@ export async function Header() {
                   <Link href="/dashboard" className="cursor-pointer">
                     <LayoutDashboard className="mr-2 h-4 w-4" />
                     <span>Dashboard</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/discovery" className="cursor-pointer">
+                    <Search className="mr-2 h-4 w-4" />
+                    <span>Discovery</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/matches" className="cursor-pointer">
+                    <Heart className="mr-2 h-4 w-4" />
+                    <span>Matches</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>

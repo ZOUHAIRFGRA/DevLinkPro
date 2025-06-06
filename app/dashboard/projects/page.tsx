@@ -58,8 +58,17 @@ export default async function ProjectDashboard() {
 
   await connectDB();
 
+  // First find the user by email to get the MongoDB ObjectId
+  const currentUser = await User.findOne({ email: session.user.email }).lean();
+  if (!currentUser) {
+    redirect('/auth/sign-in');
+  }
+
+  // TypeScript type assertion for the _id property
+  const userId = (currentUser as { _id: unknown })._id;
+
   // Fetch user's projects with populated applicants and collaborators
-  const projects = await Project.find({ owner: session.user.id })
+  const projects = await Project.find({ owner: userId })
     .populate({
       path: 'applicants.user',
       model: User,

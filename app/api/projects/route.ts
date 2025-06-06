@@ -9,8 +9,12 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
+    const owner = searchParams.get('owner');
     const category = searchParams.get('category');
     const status = searchParams.get('status');
+    const difficulty = searchParams.get('difficulty');
+    const technologies = searchParams.get('technologies')?.split(',').filter(Boolean);
+    const search = searchParams.get('search');
     const limit = parseInt(searchParams.get('limit') || '10');
     const page = parseInt(searchParams.get('page') || '1');
 
@@ -18,8 +22,23 @@ export async function GET(request: NextRequest) {
 
     let query: Record<string, unknown> = { isPublic: true };
 
+    // If owner=me, fetch current user's projects
+    if (owner === 'me') {
+      const session = await auth();
+      if (!session?.user?.email) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      
+      // Find the user by email to get their MongoDB ObjectId
+      const currentUser = await User.findOne({ email: session.user.email }).select('_id');
+      if (!currentUser) {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      }
+      
+      query = { owner: currentUser._id };
+    }
     // If userId is provided, fetch user's projects
-    if (userId) {
+    else if (userId) {
       query = { owner: userId };
     }
 
@@ -29,6 +48,32 @@ export async function GET(request: NextRequest) {
     }
     if (status) {
       query.status = status;
+    }
+    if (difficulty) {
+      query.difficulty = difficulty;
+    }
+    if (technologies && technologies.length > 0) {
+      query.$or = [
+        { technologies: { $in: technologies } },
+        { plannedTechnologies: { $in: technologies } }
+      ];
+    }
+    if (search) {
+      const searchQuery = {
+        $or: [
+          { title: { $regex: search, $options: 'i' } },
+          { description: { $regex: search, $options: 'i' } },
+          { technologies: { $in: [new RegExp(search, 'i')] } },
+          { plannedTechnologies: { $in: [new RegExp(search, 'i')] } },
+          { category: { $regex: search, $options: 'i' } }
+        ]
+      };
+      
+      if (query.$and) {
+        (query.$and as Array<Record<string, unknown>>).push(searchQuery);
+      } else {
+        query.$and = [searchQuery];
+      }
     }
 
     const skip = (page - 1) * limit;

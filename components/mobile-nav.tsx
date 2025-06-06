@@ -124,6 +124,22 @@ export function MobileNav() {
                   Find Developers
                 </Link>
               </li>
+              <li>
+                <Link 
+                  href="/discovery" 
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  Discovery
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  href="/matches" 
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  Matches
+                </Link>
+              </li>
             </ul>
           </div>
           <Separator />
