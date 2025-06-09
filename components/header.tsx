@@ -3,11 +3,9 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
-  NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
-  NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import {
@@ -24,59 +22,27 @@ import { MobileNav } from "./mobile-nav";
 import { auth, signOut } from "@/auth";
 import { User, Settings, LogOut, LayoutDashboard, Target, Search, Heart } from "lucide-react";
 import { ModeToggle } from "./mode-toggle";
+import NotificationInbox from "./notification-inbox";
 
 export async function Header() {
   const session = await auth();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
-      <div className="container flex h-16 items-center justify-between px-4 md:px-6 lg:px-8">
-        <div className="flex items-center gap-2">
-          <MobileNav />
-          <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-            DevLink
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 items-center">
+        {/* Left side - Logo */}
+        <div className="mr-4 hidden md:flex">
+          <Link href="/" className="mr-6 flex items-center space-x-2">
+            <span className="font-bold text-xl">DevLink</span>
           </Link>
         </div>
-        <NavigationMenu className="hidden md:block">
+
+        {/* Mobile menu */}
+        <MobileNav />
+
+        {/* Navigation Menu */}
+        <NavigationMenu className="hidden md:flex">
           <NavigationMenuList>
-            <NavigationMenuItem>
-              <NavigationMenuTrigger>Features</NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-2">
-                  <ListItem href="#" title="Developer Profiles">
-                    Create and manage your professional profile
-                  </ListItem>
-                  <ListItem href="#" title="Project Matching">
-                    Find projects that match your skills
-                  </ListItem>
-                  <ListItem href="#" title="Skill Verification">
-                    Verify your skills with tests and challenges
-                  </ListItem>
-                  <ListItem href="#" title="Collaboration Tools">
-                    Work together with in-app communication
-                  </ListItem>
-                </ul>
-              </NavigationMenuContent>
-            </NavigationMenuItem>
-            <NavigationMenuItem>
-              <NavigationMenuTrigger>Resources</NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-2">
-                  <ListItem href="#" title="Documentation">
-                    Learn how to use DevLink effectively
-                  </ListItem>
-                  <ListItem href="#" title="Blog">
-                    Read our latest articles and updates
-                  </ListItem>
-                  <ListItem href="#" title="Community">
-                    Join the conversation with other developers
-                  </ListItem>
-                  <ListItem href="#" title="Support">
-                    Get help with any questions or issues
-                  </ListItem>
-                </ul>
-              </NavigationMenuContent>
-            </NavigationMenuItem>
             <NavigationMenuItem>
               <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
                 <Link href="/projects">
@@ -109,6 +75,13 @@ export async function Header() {
                 </NavigationMenuItem>
                 <NavigationMenuItem>
                   <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
+                    <Link href="/applications">
+                      Applications
+                    </Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+                <NavigationMenuItem>
+                  <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
                     <Link href="/dashboard">
                       Dashboard
                     </Link>
@@ -122,6 +95,7 @@ export async function Header() {
         {/* Right side - Authentication */}
         <div className="hidden md:flex items-center gap-2">
           <ModeToggle />
+          {session && <NotificationInbox />}
           {session ? (
             // Logged in user menu
             <DropdownMenu>
@@ -166,9 +140,9 @@ export async function Header() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/dashboard/projects" className="cursor-pointer">
+                  <Link href="/applications" className="cursor-pointer">
                     <Target className="mr-2 h-4 w-4" />
-                    <span>My Projects</span>
+                    <span>Applications</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>

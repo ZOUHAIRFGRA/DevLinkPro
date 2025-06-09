@@ -5,6 +5,8 @@ import Swipe from '@/models/swipe';
 import Match from '@/models/match';
 import Project from '@/models/project';
 import User from '@/models/user';
+import Application from '@/models/application';
+import Notification from '@/models/notification';
 import mongoose from 'mongoose';
 
 // POST - Record a swipe and check for matches
@@ -66,23 +68,44 @@ export async function POST(request: NextRequest) {
     );
 
     let match = null;
+    let application = null;
 
-    // Check for mutual match if this was a like
+    // Handle different swipe types
     if (swipeType === 'like') {
-      let mutualSwipe = null;
-
       if (targetType === 'project') {
-        // Check if project owner liked this user
+        // Create application when someone likes a project
         const project = await Project.findById(targetId);
         if (project) {
-          mutualSwipe = await Swipe.findOne({
+          application = await Application.findOneAndUpdate(
+            {
+              projectId: new mongoose.Types.ObjectId(targetId),
+              developerId: currentUser._id
+            },
+            {
+              projectOwnerId: project.owner,
+              status: 'pending',
+              appliedAt: new Date()
+            },
+            { upsert: true, new: true }
+          );
+
+          // Create notification for project owner
+          await Notification.create({
             userId: project.owner,
-            targetId: currentUser._id,
-            targetType: 'user',
-            swipeType: 'like'
+            type: 'application',
+            title: 'New Project Application',
+            message: `Someone is interested in your project: ${project.title}`,
+            data: {
+              projectId: targetId,
+              applicationId: application._id.toString(),
+              fromUserId: currentUser._id.toString()
+            }
           });
         }
       } else {
+        // For user swipes, check for mutual interest (existing logic)
+        let mutualSwipe = null;
+
         // Check if the user liked a project owned by the target user
         const userProjects = await Project.find({ owner: new mongoose.Types.ObjectId(targetId) });
         for (const project of userProjects) {
@@ -97,46 +120,57 @@ export async function POST(request: NextRequest) {
             break;
           }
         }
-      }
 
-      // Create match if mutual interest exists
-      if (mutualSwipe) {
-        match = await Match.findOneAndUpdate(
-          {
-            userId: currentUser._id,
-            targetId: new mongoose.Types.ObjectId(targetId),
-            targetType
-          },
-          {
-            matchedAt: new Date(),
-            status: 'active'
-          },
-          { upsert: true, new: true }
-        );
+        // Create match if mutual interest exists
+        if (mutualSwipe) {
+          match = await Match.findOneAndUpdate(
+            {
+              userId: currentUser._id,
+              targetId: new mongoose.Types.ObjectId(targetId),
+              targetType: 'user'
+            },
+            {
+              matchedAt: new Date(),
+              status: 'active'
+            },
+            { upsert: true, new: true }
+          );
 
-        // Also create the reverse match
-        const reverseTargetType = targetType === 'project' ? 'user' : 'project';
-        const reverseTargetId = targetType === 'project' ? currentUser._id : targetId;
-        
-        await Match.findOneAndUpdate(
-          {
-            userId: new mongoose.Types.ObjectId(targetType === 'project' ? targetId : currentUser._id),
-            targetId: new mongoose.Types.ObjectId(reverseTargetId),
-            targetType: reverseTargetType
-          },
-          {
-            matchedAt: new Date(),
-            status: 'active'
-          },
-          { upsert: true }
-        );
+          // Also create the reverse match
+          await Match.findOneAndUpdate(
+            {
+              userId: new mongoose.Types.ObjectId(targetId),
+              targetId: currentUser._id,
+              targetType: 'project'
+            },
+            {
+              matchedAt: new Date(),
+              status: 'active'
+            },
+            { upsert: true }
+          );
+
+          // Create notification for both users
+          await Notification.create({
+            userId: new mongoose.Types.ObjectId(targetId),
+            type: 'match',
+            title: 'New Match!',
+            message: 'You have a new match!',
+            data: {
+              matchId: match._id.toString(),
+              fromUserId: currentUser._id.toString()
+            }
+          });
+        }
       }
     }
 
     return NextResponse.json({ 
       success: true, 
       match: !!match,
-      matchId: match?._id 
+      application: !!application,
+      matchId: match?._id,
+      applicationId: application?._id
     });
   } catch (error) {
     console.error('Error in swipe API:', error);
