@@ -123,7 +123,7 @@ export class GitHubAPI {
       return null;
     }
   }
-
+// todo : add it to user profile, for now its not used
   async getContributionStats(username: string): Promise<{ totalContributions: number; contributionsByMonth: GitHubContribution[] }> {
     try {
       // This would typically require GraphQL API for full contribution graph
@@ -133,7 +133,7 @@ export class GitHubAPI {
       // Calculate basic stats from repositories
       const totalContributions = repos.reduce((total, repo) => total + repo.stargazers_count, 0);
       
-      // Mock monthly contributions (in a real app, you'd use GraphQL API)
+      // Mock monthly contributions
       const contributionsByMonth = Array.from({ length: 12 }, (_, i) => ({
         date: new Date(2024, i, 1).toISOString().split('T')[0],
         contributionCount: Math.floor(Math.random() * 50) + 10,

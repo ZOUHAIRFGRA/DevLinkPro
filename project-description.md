@@ -35,10 +35,10 @@ Okay, here's a full project description for "DevLink" (our placeholder name), yo
     * **F2.3: Experience & Education:** Sections to add work experience and educational background.
     * **F2.4: Portfolio & Social Links:** Links to GitHub (primary), LinkedIn, personal portfolio website, etc.
     * **F2.5: Project History (on DevLink):** Display projects the user has created or collaborated on within the platform.
-* **F3: Skill Verification (Basic):**
+<!-- * **F3: Skill Verification (Basic):**
     * **F3.1: Code-Based QCMs:** Multiple-choice questions based on code snippets for selected core skills (e.g., JavaScript fundamentals, React concepts).
     * **F3.2: Small Coding Challenges (Optional initial focus):** Simple, auto-graded coding tasks for specific technologies (e.g., "Write a function to X").
-    * **F3.3: Verified Skill Badges:** Display badges on profiles for successfully completed verifications.
+    * **F3.3: Verified Skill Badges:** Display badges on profiles for successfully completed verifications. -->
 * **F4: Project Posting & Management:**
     * **F4.1: Create Project:** Form to describe the project idea, current status/progress, goals, technologies used/planned.
     * **F4.2: Define Roles Needed:** Specify skills required, desired experience level, and commitment expectations for collaborators.
@@ -73,7 +73,7 @@ Okay, here's a full project description for "DevLink" (our placeholder name), yo
 
 This is a suggested breakdown. Sprints are typically 2-4 weeks.
 
-#### Sprint 0: Project Setup & Foundational Backend (1-2 Weeks)
+#### Sprint 0: Project Setup & Foundational Backend (1-2 Weeks) [DONE]
 **Goal:** Get the project environment ready and core backend structures in place.
 * **Tasks:**
     1.  Initialize Next.js project with TypeScript.
@@ -84,7 +84,7 @@ This is a suggested breakdown. Sprints are typically 2-4 weeks.
     6.  Set up project structure (folders for components, pages, API, utils, etc.).
     7.  Basic CI/CD pipeline setup (e.g., GitHub Actions for Vercel deployment).
 
-#### Sprint 1: Core Authentication & User Profiles (MVP - 2-3 Weeks)
+#### Sprint 1: Core Authentication & User Profiles (MVP - 2-3 Weeks) [DONE]
 **Goal:** Users can sign up, log in, and create/edit basic profiles.
 * **Tasks:**
     1.  Integrate NextAuth.js.
@@ -141,6 +141,3 @@ This is a suggested breakdown. Sprints are typically 2-4 weeks.
     5.  Gather user feedback from MVP usage and prioritize further enhancements.
     6.  Basic analytics for platform administrators (e.g., user growth, number of projects).
 
----
-
-This detailed plan should give you a solid foundation to start building DevLink with Next.js! Remember that agility is key; be prepared to adapt based on challenges and user feedback.
