@@ -1,36 +1,138 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DevLink - A Platform for Developer Collaboration
 
-## Getting Started
+DevLink is a modern web platform that connects developers with projects and collaborators, functioning like a "Tinder for Developers." It enables efficient discovery and collaboration between developers and project owners.
 
-First, run the development server:
+## ✨ Features
 
+### 🔄 Real-time Messaging & Notifications
+- **Instant Messaging**: Real-time chat between matched users using Pusher
+- **Live Notifications**: Instant notifications for applications, matches, and updates
+- **WebSocket Support**: Powered by Pusher for reliable, scalable real-time communication
+
+### 🤝 Smart Matching System
+- **Swipe Interface**: Tinder-like discovery for projects and developers
+- **Mutual Matching**: Connect when both parties show interest
+- **Skill-based Matching**: Algorithm considers skills, experience, and project needs
+
+### 👤 Developer Profiles
+- **GitHub Integration**: Automatic profile population from GitHub
+- **Skills Management**: Comprehensive skill listing and verification
+- **Portfolio Showcase**: Display projects, contributions, and achievements
+
+### 📋 Project Management
+- **Project Creation**: Detailed project posting with role requirements
+- **Application System**: Handle developer applications efficiently
+- **Collaboration Tools**: Manage team members and project progress
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 18+ 
+- MongoDB database
+- Pusher account (free tier available)
+
+### Installation
+
+1. **Clone the repository**
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repository-url>
+cd devlink
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Install dependencies**
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. **Set up environment variables**
+Create a `.env.local` file with:
+```env
+# Database
+MONGODB_URI=your_mongodb_connection_string
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Authentication
+NEXTAUTH_SECRET=your_nextauth_secret
+NEXTAUTH_URL=http://localhost:3000
 
-## Learn More
+# GitHub OAuth
+GITHUB_CLIENT_ID=your_github_client_id
+GITHUB_CLIENT_SECRET=your_github_client_secret
 
-To learn more about Next.js, take a look at the following resources:
+# Pusher (for real-time features)
+PUSHER_APP_ID=your_pusher_app_id
+PUSHER_KEY=your_pusher_key
+PUSHER_SECRET=your_pusher_secret
+PUSHER_CLUSTER=your_pusher_cluster
+NEXT_PUBLIC_PUSHER_KEY=your_pusher_key
+NEXT_PUBLIC_PUSHER_CLUSTER=your_pusher_cluster
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+4. **Run the development server**
+```bash
+npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Open [http://localhost:3000](http://localhost:3000) to see the application.
 
-## Deploy on Vercel
+## 📖 Documentation
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **[Real-time Setup Guide](REALTIME_SETUP.md)** - Complete guide to setting up Pusher for real-time features
+- **[Project Description](project-description.md)** - Detailed project overview and feature specifications
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🛠️ Tech Stack
+
+- **Frontend**: Next.js 15, React 19, TypeScript
+- **Styling**: Tailwind CSS, Radix UI
+- **Backend**: Next.js API Routes
+- **Database**: MongoDB with Mongoose
+- **Authentication**: NextAuth.js with GitHub OAuth
+- **Real-time**: Pusher Channels
+- **Deployment**: Vercel-ready
+
+## 🚀 Deployment
+
+This application is optimized for Vercel deployment:
+
+1. Connect your GitHub repository to Vercel
+2. Add environment variables in Vercel dashboard
+3. Deploy automatically on every push
+
+The real-time features work seamlessly on Vercel with no additional configuration needed.
+
+## 🧪 Testing Real-time Features
+
+1. Open the application in two browser windows
+2. Log in as different users
+3. Create a match between the users
+4. Test instant messaging and notifications
+
+Use the test script in `scripts/test-pusher.js` to verify Pusher connection.
+
+## 📁 Project Structure
+
+```
+├── app/                    # Next.js app directory
+│   ├── api/               # API routes
+│   ├── (pages)/           # Application pages
+│   └── globals.css        # Global styles
+├── components/            # React components
+│   ├── ui/               # UI components
+│   ├── matches/          # Match-related components
+│   └── projects/         # Project-related components
+├── lib/                  # Utility libraries
+├── models/               # Database models
+├── types/                # TypeScript definitions
+└── hooks/                # Custom React hooks
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if needed
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License.

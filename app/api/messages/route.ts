@@ -32,16 +32,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Verify user is part of this match
+    // Verify user is part of this match (either as developer or project owner)
     const match = await Match.findOne({
       _id: new mongoose.Types.ObjectId(matchId),
       $or: [
-        { userId: currentUser._id }, // User is the one who has the match
-        { targetId: currentUser._id, targetType: 'user' }, // User is the target of the match
-        { 
-          targetType: 'project',
-          targetId: { $in: await getProjectIds(currentUser._id) }
-        } // User owns the project that is the target
+        { userId: currentUser._id }, // User is the developer
+        { projectOwnerId: currentUser._id } // User is the project owner
       ]
     });
 
@@ -49,37 +45,26 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Match not found or access denied' }, { status: 404 });
     }
 
-    // Populate target data - we need to determine who the "other person" is
+    // Populate target data - determine who the "other person" is
     let otherPersonData = null;
     let otherPersonType = null;
 
-    // Determine who the other person is based on the current user
-    if (match.userId.toString() === currentUser._id.toString()) {
-      // Current user is the match owner, so the other person is the target
-      if (match.targetType === 'project') {
-        const Project = (await import('@/models/project')).default;
-        otherPersonData = await Project.findById(match.targetId)
-          .populate('owner', 'name email image githubData.username')
-          .lean();
-        otherPersonType = 'project';
-      } else {
-        otherPersonData = await User.findById(match.targetId)
-          .select('name email image githubData.username bio location')
-          .lean();
-        otherPersonType = 'user';
-      }
-    } else if (match.targetId.toString() === currentUser._id.toString() && match.targetType === 'user') {
-      // Current user is the target (in a user-to-user match), so the other person is the match owner
+    // Determine the other person based on current user's role
+    const isProjectOwner = match.projectOwnerId?.toString() === currentUser._id.toString();
+    
+    if (isProjectOwner) {
+      // Current user is project owner, other person is the developer
       otherPersonData = await User.findById(match.userId)
         .select('name email image githubData.username bio location')
         .lean();
       otherPersonType = 'user';
     } else {
-      // Current user owns a project that is the target, so the other person is the match owner
-      otherPersonData = await User.findById(match.userId)
-        .select('name email image githubData.username bio location')
+      // Current user is developer, other person is represented by the project
+      const Project = (await import('@/models/project')).default;
+      otherPersonData = await Project.findById(match.targetId)
+        .populate('owner', 'name email image githubData.username')
         .lean();
-      otherPersonType = 'user';
+      otherPersonType = 'project';
     }
 
     const populatedMatch = {
@@ -152,16 +137,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Verify user is part of this match
+    // Verify user is part of this match (either as developer or project owner)
     const match = await Match.findOne({
       _id: new mongoose.Types.ObjectId(matchId),
       $or: [
-        { userId: currentUser._id }, // User is the one who has the match
-        { targetId: currentUser._id, targetType: 'user' }, // User is the target of the match
-        { 
-          targetType: 'project',
-          targetId: { $in: await getProjectIds(currentUser._id) }
-        } // User owns the project that is the target
+        { userId: currentUser._id }, // User is the developer
+        { projectOwnerId: currentUser._id } // User is the project owner
       ]
     });
 
@@ -199,11 +180,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-// Helper function to get project IDs owned by user
-async function getProjectIds(userId: mongoose.Types.ObjectId) {
-  const Project = (await import('@/models/project')).default;
-  const projects = await Project.find({ owner: userId }).select('_id').lean();
-  return projects.map(p => p._id);
 }

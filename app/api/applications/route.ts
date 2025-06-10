@@ -118,22 +118,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Application not found' }, { status: 404 });
     }
 
-    // If accepted, create a match
+    // If accepted, create a single match that represents the collaboration
+    // We'll store it as developer -> project, and the system will handle showing it to both users
     let match = null;
     if (action === 'accept') {
       match = await Match.create({
         userId: application.developerId,
         targetId: application.projectId,
         targetType: 'project',
-        matchedAt: new Date(),
-        status: 'active'
-      });
-
-      // Also create reverse match for project owner
-      await Match.create({
-        userId: application.projectOwnerId,
-        targetId: application.developerId,
-        targetType: 'user',
+        projectOwnerId: application.projectOwnerId, // Add project owner ID for easy lookups
         matchedAt: new Date(),
         status: 'active'
       });

@@ -38,16 +38,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Verify user is part of this match
+    // Verify user is part of this match (either as developer or project owner)
     const match = await Match.findOne({
       _id: new mongoose.Types.ObjectId(matchId),
       $or: [
-        { userId: currentUser._id }, // User is the one who has the match
-        { targetId: currentUser._id, targetType: 'user' }, // User is the target of the match
-        { 
-          targetType: 'project',
-          targetId: { $in: await getProjectIds(currentUser._id) }
-        } // User owns the project that is the target
+        { userId: currentUser._id }, // User is the developer
+        { projectOwnerId: currentUser._id } // User is the project owner
       ]
     });
 
@@ -69,11 +65,4 @@ export async function POST(request: NextRequest) {
     console.error('Error in Pusher auth:', error);
     return NextResponse.json({ error: 'Authentication failed' }, { status: 500 });
   }
-}
-
-// Helper function to get project IDs owned by user
-async function getProjectIds(userId: mongoose.Types.ObjectId) {
-  const Project = (await import('@/models/project')).default;
-  const projects = await Project.find({ owner: userId }).select('_id').lean();
-  return projects.map(p => p._id);
 }

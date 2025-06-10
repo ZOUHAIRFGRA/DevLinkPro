@@ -26,9 +26,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Get user's matches
+    // Get user's matches - either as the developer or as the project owner
     const matches = await Match.find({
-      userId: currentUser._id,
+      $or: [
+        { userId: currentUser._id }, // User is the developer
+        { projectOwnerId: currentUser._id } // User is the project owner
+      ],
       status: 'active'
     })
     .sort({ matchedAt: -1 })
@@ -40,20 +43,27 @@ export async function GET(request: NextRequest) {
     const populatedMatches = await Promise.all(
       matches.map(async (match) => {
         let targetData = null;
+        
+        // Determine what to show based on current user's role in the match
+        const isProjectOwner = match.projectOwnerId?.toString() === currentUser._id.toString();
 
-        if (match.targetType === 'project') {
-          targetData = await Project.findById(match.targetId)
-            .populate('owner', 'name email image githubData.username')
+        if (isProjectOwner) {
+          // Project owner sees the developer
+          targetData = await User.findById(match.userId)
+            .select('name email image bio location skills githubData')
             .lean();
         } else {
-          targetData = await User.findById(match.targetId)
-            .select('-password -email')
+          // Developer sees the project
+          targetData = await Project.findById(match.targetId)
+            .populate('owner', 'name email image githubData.username')
             .lean();
         }
 
         return {
           ...match,
-          targetData
+          targetData,
+          // Add a flag to help the frontend understand the user's role
+          userRole: isProjectOwner ? 'project_owner' : 'developer'
         };
       })
     );

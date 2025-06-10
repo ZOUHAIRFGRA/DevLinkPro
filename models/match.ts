@@ -5,6 +5,7 @@ export interface IMatch {
   userId: mongoose.Types.ObjectId;
   targetId: mongoose.Types.ObjectId;
   targetType: 'project' | 'user';
+  projectOwnerId?: mongoose.Types.ObjectId; // For project matches, store the project owner
   matchedAt: Date;
   status: 'active' | 'archived';
   lastMessageAt?: Date;
@@ -24,6 +25,11 @@ const MatchSchema = new mongoose.Schema<IMatch>({
     type: String,
     enum: ['project', 'user'],
     required: true
+  },
+  projectOwnerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: false // Only required for project matches
   },
   matchedAt: {
     type: Date,

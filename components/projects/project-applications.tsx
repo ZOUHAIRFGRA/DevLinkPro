@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { CheckCircle, XCircle, User, Clock, Calendar } from 'lucide-react';
+import Link from 'next/link';
+import { CheckCircle, XCircle, User, Clock, Calendar, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -190,6 +191,31 @@ export default function ProjectApplications() {
                 <XCircle className="h-4 w-4" />
                 <span>Reject</span>
               </Button>
+              <Link href={`/profile/${application.developer.githubData?.username || application.developer._id}`}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="flex items-center space-x-2"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  <span>View Profile</span>
+                </Button>
+              </Link>
+            </div>
+          )}
+
+          {application.status !== 'pending' && (
+            <div className="flex space-x-2 pt-2">
+              <Link href={`/profile/${application.developer.githubData?.username || application.developer._id}`}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="flex items-center space-x-2"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  <span>View Profile</span>
+                </Button>
+              </Link>
             </div>
           )}
         </div>

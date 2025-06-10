@@ -18,6 +18,7 @@ import { formatDistanceToNow } from 'date-fns';
 interface Match {
   _id: string;
   targetType: 'project' | 'user';
+  userRole?: 'project_owner' | 'developer'; // Add userRole field
   matchedAt: string;
   targetData: {
     _id: string;
@@ -107,11 +108,25 @@ export default function MatchesList() {
   return (
     <div className="space-y-4">
       {matches.map((match) => {
-        const isProject = match.targetType === 'project';
+        // Determine what to display based on user's role in the match
+        const isViewingProject = match.userRole === 'developer'; // Developer views project
+        
         const targetData = match.targetData;
-        const displayName = isProject ? targetData.title : targetData.name;
-        const displayDescription = isProject ? targetData.description : targetData.bio;
-        const displayImage = isProject ? targetData.owner?.image : targetData.image;
+        let displayName, displayDescription, displayImage, displayType;
+        
+        if (isViewingProject) {
+          // Developer viewing project
+          displayName = targetData.title;
+          displayDescription = targetData.description;
+          displayImage = targetData.owner?.image;
+          displayType = 'Project';
+        } else {
+          // Project owner viewing developer
+          displayName = targetData.name;
+          displayDescription = targetData.bio;
+          displayImage = targetData.image;
+          displayType = 'Developer';
+        }
         
         return (
           <Card key={match._id} className="hover:shadow-md transition-shadow">
@@ -128,7 +143,7 @@ export default function MatchesList() {
                     <CardTitle className="text-lg">{displayName}</CardTitle>
                     <div className="flex items-center gap-2 mt-1">
                       <Badge variant="secondary">
-                        {isProject ? 'Project' : 'Developer'}
+                        {displayType}
                       </Badge>
                       <span className="text-sm text-muted-foreground flex items-center gap-1">
                         <Clock className="h-3 w-3" />
@@ -151,10 +166,10 @@ export default function MatchesList() {
               )}
             </CardHeader>
             
-            {(isProject ? targetData.technologies : targetData.skills) && (
+            {(isViewingProject ? targetData.technologies : targetData.skills) && (
               <CardContent>
                 <div className="flex flex-wrap gap-1">
-                  {isProject ? 
+                  {isViewingProject ? 
                     targetData.technologies?.slice(0, 6).map((tech) => (
                       <Badge key={tech} variant="outline" className="text-xs">
                         {tech}
@@ -170,16 +185,16 @@ export default function MatchesList() {
                 
                 <div className="mt-4 flex justify-between items-center">
                   <div className="text-sm text-muted-foreground">
-                    {isProject && targetData.owner && (
+                    {isViewingProject && targetData.owner && (
                       <span>by {targetData.owner.name}</span>
                     )}
-                    {!isProject && targetData.githubData?.username && (
+                    {!isViewingProject && targetData.githubData?.username && (
                       <span>@{targetData.githubData.username}</span>
                     )}
                   </div>
                   
                   <Link 
-                    href={isProject ? `/projects/${targetData._id}` : `/profile/${targetData.githubData?.username || targetData._id}`}
+                    href={isViewingProject ? `/projects/${targetData._id}` : `/profile/${targetData.githubData?.username || targetData._id}`}
                   >
                     <Button variant="ghost" size="sm">
                       View Profile
