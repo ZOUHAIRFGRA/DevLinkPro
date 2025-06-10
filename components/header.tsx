@@ -29,80 +29,75 @@ export async function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center">
-        {/* Left side - Logo */}
-        <div className="mr-4 hidden md:flex">
-          <Link href="/" className="mr-6 flex items-center space-x-2">
-            <span className="font-bold text-xl">DevLink</span>
-          </Link>
+      <div className="container flex h-14 items-center justify-between px-4">
+        {/* Left side - Logo and Mobile Nav */}
+        <div className="flex items-center">
+          <div className="mr-4 hidden md:flex">
+            <Link href="/" className="flex items-center space-x-2">
+              <span className="font-bold text-xl">DevLink</span>
+            </Link>
+          </div>
+          <MobileNav />
         </div>
 
-        {/* Mobile menu */}
-        <MobileNav />
+        {/* Center - Navigation Menu (conditionally centered) */}
+        <div className={session ? "flex-1 flex justify-center" : "flex-1 flex justify-center md:justify-start"}>
+          <NavigationMenu className="hidden md:flex">
+            <NavigationMenuList>
+              <NavigationMenuItem>
+                <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
+                  <Link href="/projects">
+                    Browse Projects
+                  </Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+              {session && (
+                <>
+                  <NavigationMenuItem>
+                    <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
+                      <Link href="/discovery">
+                        Discovery
+                      </Link>
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+                  <NavigationMenuItem>
+                    <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
+                      <Link href="/matches">
+                        Matches
+                      </Link>
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+                  <NavigationMenuItem>
+                    <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
+                      <Link href="/applications">
+                        Applications
+                      </Link>
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+                  <NavigationMenuItem>
+                    <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
+                      <Link href="/dashboard">
+                        Dashboard
+                      </Link>
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+                  <NavigationMenuItem>
+                    <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
+                      <Link href="/chat">
+                        Chats
+                      </Link>
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+                </>
+              )}
+            </NavigationMenuList>
+          </NavigationMenu>
+        </div>
 
-        {/* Navigation Menu */}
-        <NavigationMenu className="hidden md:flex">
-          <NavigationMenuList>
-            <NavigationMenuItem>
-              <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
-                <Link href="/projects">
-                  Browse Projects
-                </Link>
-              </NavigationMenuLink>
-            </NavigationMenuItem>
-            {/* <NavigationMenuItem>
-              <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
-                <Link href="/developers">
-                  Find Developers
-                </Link>
-              </NavigationMenuLink>
-            </NavigationMenuItem> */}
-            {session && (
-              <>
-                <NavigationMenuItem>
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
-                    <Link href="/discovery">
-                      Discovery
-                    </Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
-                    <Link href="/matches">
-                      Matches
-                    </Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
-                    <Link href="/applications">
-                      Applications
-                    </Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
-                    <Link href="/dashboard">
-                      Dashboard
-                    </Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
-                    <Link href="/chat">
-                      Chats
-                    </Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-              </>
-            )}
-          </NavigationMenuList>
-        </NavigationMenu>
-
-        {/* Right side - Authentication */}
-        <div className="hidden md:flex items-center gap-2">
-          <ModeToggle />
+        {/* Right side - Authentication & Actions */}
+        <div className="flex items-center gap-2">
           {session && <NotificationInbox userEmail={session.user?.email || undefined} />}
+          <ModeToggle />
           {session ? (
             // Logged in user menu
             <DropdownMenu>

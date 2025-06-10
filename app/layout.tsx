@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/header";
-// import { Footer } from "@/components/footer";
+import { Footer } from "@/components/footer";
 import { ThemeProvider } from "@/components/theme-provider";
 import { MinHeightWrapper } from "@/components/ui/min-height-wrapper";
 import AuthProvider from "@/components/auth-provider";
@@ -44,7 +44,7 @@ export default function RootLayout({
             <MinHeightWrapper>
               <main className="flex-1">{children}</main>
             </MinHeightWrapper>
-            {/* <Footer /> */}
+            <Footer />
             <Toaster />
           </AuthProvider>
         </ThemeProvider>
