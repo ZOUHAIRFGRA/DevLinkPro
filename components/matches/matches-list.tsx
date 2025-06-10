@@ -18,27 +18,32 @@ import { formatDistanceToNow } from 'date-fns';
 interface Match {
   _id: string;
   targetType: 'project' | 'user';
-  userRole?: 'project_owner' | 'developer'; // Add userRole field
   matchedAt: string;
+  status: string;
+  lastMessageAt?: string;
+  userRole: 'project_owner' | 'developer';
   targetData: {
     _id: string;
-    title?: string; // for projects
-    name?: string; // for users
+    // Project fields
+    title?: string;
     description?: string;
-    bio?: string;
-    image?: string;
     technologies?: string[];
-    skills?: Array<{
-      name: string;
-      level: string;
-    }>;
     owner?: {
+      _id: string;
       name: string;
       image?: string;
       githubData?: {
         username: string;
       };
     };
+    // User fields
+    name?: string;
+    bio?: string;
+    image?: string;
+    skills?: Array<{
+      name: string;
+      level: string;
+    }>;
     githubData?: {
       username: string;
     };
@@ -108,25 +113,16 @@ export default function MatchesList() {
   return (
     <div className="space-y-4">
       {matches.map((match) => {
-        // Determine what to display based on user's role in the match
-        const isViewingProject = match.userRole === 'developer'; // Developer views project
-        
+        const isProject = match.targetType === 'project';
+        const isUser = match.targetType === 'user';
         const targetData = match.targetData;
-        let displayName, displayDescription, displayImage, displayType;
         
-        if (isViewingProject) {
-          // Developer viewing project
-          displayName = targetData.title;
-          displayDescription = targetData.description;
-          displayImage = targetData.owner?.image;
-          displayType = 'Project';
-        } else {
-          // Project owner viewing developer
-          displayName = targetData.name;
-          displayDescription = targetData.bio;
-          displayImage = targetData.image;
-          displayType = 'Developer';
-        }
+        // Determine display values based on target type
+        const displayName = isProject ? targetData.title : targetData.name;
+        const displayDescription = isProject ? targetData.description : targetData.bio;
+        const displayImage = isProject ? targetData.owner?.image : targetData.image;
+        const displayTechnologies = isProject ? targetData.technologies : null;
+        const displaySkills = isUser ? targetData.skills : null;
         
         return (
           <Card key={match._id} className="hover:shadow-md transition-shadow">
@@ -136,14 +132,14 @@ export default function MatchesList() {
                   <Avatar>
                     <AvatarImage src={displayImage} />
                     <AvatarFallback>
-                      {displayName?.charAt(0).toUpperCase()}
+                      {displayName?.charAt(0).toUpperCase() || '?'}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <CardTitle className="text-lg">{displayName}</CardTitle>
+                    <CardTitle className="text-lg">{displayName || 'Unknown'}</CardTitle>
                     <div className="flex items-center gap-2 mt-1">
                       <Badge variant="secondary">
-                        {displayType}
+                        {isProject ? 'Project' : 'Developer'}
                       </Badge>
                       <span className="text-sm text-muted-foreground flex items-center gap-1">
                         <Clock className="h-3 w-3" />
@@ -166,16 +162,18 @@ export default function MatchesList() {
               )}
             </CardHeader>
             
-            {(isViewingProject ? targetData.technologies : targetData.skills) && (
+            {(displayTechnologies || displaySkills) && (
               <CardContent>
                 <div className="flex flex-wrap gap-1">
-                  {isViewingProject ? 
-                    targetData.technologies?.slice(0, 6).map((tech) => (
+                  {displayTechnologies && 
+                    displayTechnologies.slice(0, 6).map((tech) => (
                       <Badge key={tech} variant="outline" className="text-xs">
                         {tech}
                       </Badge>
-                    )) :
-                    targetData.skills?.slice(0, 6).map((skill) => (
+                    ))
+                  }
+                  {displaySkills && 
+                    displaySkills.slice(0, 6).map((skill) => (
                       <Badge key={skill.name} variant="outline" className="text-xs">
                         {skill.name}
                       </Badge>
@@ -185,16 +183,16 @@ export default function MatchesList() {
                 
                 <div className="mt-4 flex justify-between items-center">
                   <div className="text-sm text-muted-foreground">
-                    {isViewingProject && targetData.owner && (
+                    {isProject && targetData.owner && (
                       <span>by {targetData.owner.name}</span>
                     )}
-                    {!isViewingProject && targetData.githubData?.username && (
+                    {isUser && targetData.githubData?.username && (
                       <span>@{targetData.githubData.username}</span>
                     )}
                   </div>
                   
                   <Link 
-                    href={isViewingProject ? `/projects/${targetData._id}` : `/profile/${targetData.githubData?.username || targetData._id}`}
+                    href={isProject ? `/projects/${targetData._id}` : `/profile/${targetData.githubData?.username || targetData._id}`}
                   >
                     <Button variant="ghost" size="sm">
                       View Profile

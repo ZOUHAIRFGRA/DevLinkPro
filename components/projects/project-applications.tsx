@@ -36,8 +36,8 @@ interface Application {
   appliedAt: string;
   respondedAt?: string;
   message?: string;
-  project: Project;
-  developer: Developer;
+  project: Project | null;
+  developer: Developer | null;
 }
 
 export default function ProjectApplications() {
@@ -101,7 +101,25 @@ export default function ProjectApplications() {
     });
   };
 
-  const ApplicationCard = ({ application }: { application: Application }) => (
+  const ApplicationCard = ({ application }: { application: Application }) => {
+    // Safety check for null project or developer
+    if (!application.project || !application.developer) {
+      return (
+        <Card className="mb-4">
+          <CardContent className="p-4">
+            <div className="text-center text-muted-foreground">
+              <p className="text-sm">Application data incomplete</p>
+              <p className="text-xs mt-1">
+                {!application.project && "Project not found"}
+                {!application.developer && "Developer not found"}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
     <Card className="mb-4">
       <CardHeader>
         <div className="flex items-start justify-between">
@@ -221,7 +239,8 @@ export default function ProjectApplications() {
         </div>
       </CardContent>
     </Card>
-  );
+    );
+  };
 
   return (
     <div className="container mx-auto p-6">

@@ -87,6 +87,13 @@ export async function Header() {
                     </Link>
                   </NavigationMenuLink>
                 </NavigationMenuItem>
+                <NavigationMenuItem>
+                  <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
+                    <Link href="/chat">
+                      Chats
+                    </Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
               </>
             )}
           </NavigationMenuList>

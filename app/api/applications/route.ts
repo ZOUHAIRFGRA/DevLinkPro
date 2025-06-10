@@ -64,7 +64,10 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    return NextResponse.json({ applications: populatedApplications });
+    // Filter out applications with missing project or developer data
+    const validApplications = populatedApplications.filter(app => app.project && app.developer);
+
+    return NextResponse.json({ applications: validApplications });
   } catch (error) {
     console.error('Error in applications API:', error);
     return NextResponse.json(

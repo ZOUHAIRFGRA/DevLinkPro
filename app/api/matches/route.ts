@@ -43,32 +43,53 @@ export async function GET(request: NextRequest) {
     const populatedMatches = await Promise.all(
       matches.map(async (match) => {
         let targetData = null;
+        let targetType = match.targetType;
         
         // Determine what to show based on current user's role in the match
         const isProjectOwner = match.projectOwnerId?.toString() === currentUser._id.toString();
+        const isDeveloper = match.userId?.toString() === currentUser._id.toString();
 
         if (isProjectOwner) {
-          // Project owner sees the developer
+          // Project owner sees the developer who swiped on their project
           targetData = await User.findById(match.userId)
-            .select('name email image bio location skills githubData')
+            .select('name email image bio skills githubData')
             .lean();
-        } else {
-          // Developer sees the project
-          targetData = await Project.findById(match.targetId)
-            .populate('owner', 'name email image githubData.username')
-            .lean();
+          targetType = 'user'; // Project owner views developer
+        } else if (isDeveloper) {
+          // Developer sees what they swiped on
+          if (match.targetType === 'project') {
+            targetData = await Project.findById(match.targetId)
+              .populate('owner', 'name email image githubData')
+              .lean();
+          } else {
+            targetData = await User.findById(match.targetId)
+              .select('name email image bio skills githubData')
+              .lean();
+          }
+          targetType = match.targetType;
+        }
+
+        // Filter out matches with missing target data
+        if (!targetData) {
+          return null;
         }
 
         return {
-          ...match,
+          _id: match._id,
+          targetType,
+          matchedAt: match.matchedAt,
+          status: match.status,
+          lastMessageAt: match.lastMessageAt,
           targetData,
-          // Add a flag to help the frontend understand the user's role
           userRole: isProjectOwner ? 'project_owner' : 'developer'
         };
       })
     );
 
-    return NextResponse.json({ matches: populatedMatches });
+    // Filter out null matches (where target data was missing)
+    const validMatches = populatedMatches.filter(match => match !== null);
+
+    return NextResponse.json({ matches: validMatches });
   } catch (error) {
     console.error('Error in matches API:', error);
     return NextResponse.json(
