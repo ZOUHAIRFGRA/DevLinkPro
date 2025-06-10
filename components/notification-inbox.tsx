@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Bell } from 'lucide-react';
 import {
   DropdownMenu,
@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { pusherClient } from '@/lib/pusher';
 
 interface Notification {
   _id: string;
@@ -29,13 +30,17 @@ interface Notification {
   };
 }
 
-export default function NotificationInbox() {
+interface NotificationInboxProps {
+  userEmail?: string;
+}
+
+export default function NotificationInbox({ userEmail }: NotificationInboxProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch('/api/notifications');
@@ -49,7 +54,7 @@ export default function NotificationInbox() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const markAsRead = async (notificationId: string) => {
     try {
@@ -100,10 +105,23 @@ export default function NotificationInbox() {
 
   useEffect(() => {
     fetchNotifications();
-    // Poll for new notifications every 30 seconds
-    const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
-  }, []);
+    
+    // Subscribe to real-time notifications
+    if (userEmail) {
+      const channelName = `user-${userEmail.replace('@', '-').replace('.', '-')}`; // Sanitize email for channel name
+      const channel = pusherClient.subscribe(channelName);
+      
+      channel.bind('new-notification', (data: { notification: Notification }) => {
+        setNotifications(prev => [data.notification, ...prev]);
+        setUnreadCount(prev => prev + 1);
+      });
+      
+      return () => {
+        channel.unbind('new-notification');
+        pusherClient.unsubscribe(channelName);
+      };
+    }
+  }, [userEmail, fetchNotifications]);
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);

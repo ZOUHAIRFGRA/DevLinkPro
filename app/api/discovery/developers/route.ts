@@ -105,10 +105,24 @@ export async function GET(request: NextRequest) {
       if (developer.bio) boostScore += 0.05;
       if (developer.experience?.length > 0) boostScore += 0.05;
 
+      const skillMisses = requiredSkills.filter(reqSkill => 
+        !developerSkills.some((devSkill: string) => 
+          devSkill.includes(reqSkill) || reqSkill.includes(devSkill)
+        )
+      );
+
       return {
         ...developer,
         matchScore: Math.min(Math.round((matchScore + boostScore) * 100), 100),
-        skillMatches
+        matchDetails: {
+          skillMatches: skillMatches,
+          skillMisses: skillMisses,
+          developerSkills: developerSkills,
+          requiredSkills: requiredSkills,
+          matchedCount: skillMatches.length,
+          totalRequired: requiredSkills.length,
+          boostScore: Math.round(boostScore * 100)
+        }
       };
     });
 

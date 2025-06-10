@@ -7,6 +7,7 @@ import User from '@/models/user';
 import Match from '@/models/match';
 import Notification from '@/models/notification';
 import mongoose from 'mongoose';
+import { pusherServer } from '@/lib/pusher';
 
 // GET - Get applications for user's projects
 export async function GET(request: NextRequest) {
@@ -140,7 +141,7 @@ export async function POST(request: NextRequest) {
 
     // Create notification for developer
     const project = await Project.findById(application.projectId).select('title').lean() as { title: string } | null;
-    await Notification.create({
+    const notification = await Notification.create({
       userId: application.developerId,
       type: action === 'accept' ? 'application_accepted' : 'application_rejected',
       title: action === 'accept' ? 'Application Accepted!' : 'Application Update',
@@ -153,6 +154,15 @@ export async function POST(request: NextRequest) {
         matchId: match?._id?.toString()
       }
     });
+
+    // Trigger real-time notification via Pusher
+    const developer = await User.findById(application.developerId);
+    if (developer?.email) {
+      const channelName = `user-${developer.email.replace('@', '-').replace('.', '-')}`;
+      await pusherServer.trigger(channelName, 'new-notification', {
+        notification: notification
+      });
+    }
 
     return NextResponse.json({ 
       success: true,

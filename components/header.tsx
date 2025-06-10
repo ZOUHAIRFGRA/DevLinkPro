@@ -95,7 +95,7 @@ export async function Header() {
         {/* Right side - Authentication */}
         <div className="hidden md:flex items-center gap-2">
           <ModeToggle />
-          {session && <NotificationInbox />}
+          {session && <NotificationInbox userEmail={session.user?.email || undefined} />}
           {session ? (
             // Logged in user menu
             <DropdownMenu>

@@ -137,10 +137,12 @@ export default function MatchesList() {
                     </div>
                   </div>
                 </div>
-                <Button size="sm" variant="outline">
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  Message
-                </Button>
+                <Link href={`/matches/${match._id}`}>
+                  <Button size="sm" variant="outline">
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Message
+                  </Button>
+                </Link>
               </div>
               {displayDescription && (
                 <CardDescription className="line-clamp-2">

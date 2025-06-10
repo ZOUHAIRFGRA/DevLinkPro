@@ -8,6 +8,7 @@ import User from '@/models/user';
 import Application from '@/models/application';
 import Notification from '@/models/notification';
 import mongoose from 'mongoose';
+import { pusherServer } from '@/lib/pusher';
 
 // POST - Record a swipe and check for matches
 export async function POST(request: NextRequest) {
@@ -90,7 +91,7 @@ export async function POST(request: NextRequest) {
           );
 
           // Create notification for project owner
-          await Notification.create({
+          const notification = await Notification.create({
             userId: project.owner,
             type: 'application',
             title: 'New Project Application',
@@ -101,6 +102,15 @@ export async function POST(request: NextRequest) {
               fromUserId: currentUser._id.toString()
             }
           });
+
+          // Trigger real-time notification via Pusher
+          const projectOwner = await User.findById(project.owner);
+          if (projectOwner?.email) {
+            const channelName = `user-${projectOwner.email.replace('@', '-').replace('.', '-')}`;
+            await pusherServer.trigger(channelName, 'new-notification', {
+              notification: notification
+            });
+          }
         }
       } else {
         // For user swipes, check for mutual interest (existing logic)
@@ -151,7 +161,7 @@ export async function POST(request: NextRequest) {
           );
 
           // Create notification for both users
-          await Notification.create({
+          const matchNotification = await Notification.create({
             userId: new mongoose.Types.ObjectId(targetId),
             type: 'match',
             title: 'New Match!',
@@ -161,6 +171,15 @@ export async function POST(request: NextRequest) {
               fromUserId: currentUser._id.toString()
             }
           });
+
+          // Trigger real-time notification via Pusher
+          const targetUser = await User.findById(targetId);
+          if (targetUser?.email) {
+            const channelName = `user-${targetUser.email.replace('@', '-').replace('.', '-')}`;
+            await pusherServer.trigger(channelName, 'new-notification', {
+              notification: matchNotification
+            });
+          }
         }
       }
     }

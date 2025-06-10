@@ -95,15 +95,35 @@ export async function GET(request: NextRequest) {
         ...(project.plannedTechnologies || [])
       ].map((tech: string) => tech.toLowerCase());
 
-      const skillMatches = projectTechs.filter((tech: string) => 
+      type RoleType = { isActive?: boolean; skills?: string[] };
+      const roleSkills = ((project.rolesNeeded as RoleType[]) || [])
+        .filter((role: RoleType) => role.isActive !== false)
+        .flatMap((role: RoleType) => role.skills || [])
+        .map((skill: string) => skill.toLowerCase());
+
+      const allRequiredSkills = [...new Set([...projectTechs, ...roleSkills])];
+      
+      const skillMatches = allRequiredSkills.filter((tech: string) => 
         userSkills.some((skill: string) => skill.includes(tech) || tech.includes(skill))
       );
 
-      const matchScore = skillMatches.length / Math.max(projectTechs.length, 1);
+      const skillMisses = allRequiredSkills.filter((tech: string) => 
+        !userSkills.some((skill: string) => skill.includes(tech) || tech.includes(skill))
+      );
+
+      const matchScore = skillMatches.length / Math.max(allRequiredSkills.length, 1);
 
       return {
         ...project,
-        matchScore: Math.round(matchScore * 100)
+        matchScore: Math.round(matchScore * 100),
+        matchDetails: {
+          skillMatches: skillMatches,
+          skillMisses: skillMisses,
+          userSkills: userSkills,
+          requiredSkills: allRequiredSkills,
+          matchedCount: skillMatches.length,
+          totalRequired: allRequiredSkills.length
+        }
       };
     });
 

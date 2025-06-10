@@ -19,9 +19,26 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface DiscoveryFeedProps {
   type: 'projects' | 'developers';
+}
+
+interface MatchDetails {
+  skillMatches: string[];
+  skillMisses: string[];
+  userSkills?: string[];
+  developerSkills?: string[];
+  requiredSkills: string[];
+  matchedCount: number;
+  totalRequired: number;
+  boostScore?: number;
 }
 
 interface Project {
@@ -45,6 +62,7 @@ interface Project {
     };
   };
   matchScore: number;
+  matchDetails: MatchDetails;
   createdAt: string;
 }
 
@@ -69,7 +87,7 @@ interface Developer {
     linkedin?: string;
   };
   matchScore: number;
-  skillMatches: string[];
+  matchDetails: MatchDetails;
 }
 
 export default function DiscoveryFeed({ type }: DiscoveryFeedProps) {
@@ -86,6 +104,77 @@ export default function DiscoveryFeed({ type }: DiscoveryFeedProps) {
     skills: '',
     projectId: ''
   });
+
+  // Helper component for match details tooltip
+  const MatchTooltip = ({ matchDetails, matchScore, type }: { 
+    matchDetails: MatchDetails; 
+    matchScore: number; 
+    type: 'project' | 'developer' 
+  }) => (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Badge variant="secondary" className="cursor-help">
+            {matchScore}% match
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-sm p-4">
+          <div className="space-y-3">
+            <div className="font-semibold text-sm">Match Breakdown</div>
+            
+            <div className="space-y-2 text-xs">
+              <div>
+                <span className="font-medium">Skills Match: </span>
+                <span className="text-green-600">{matchDetails.matchedCount}</span>
+                <span className="text-muted-foreground"> / {matchDetails.totalRequired}</span>
+              </div>
+              
+              {matchDetails.skillMatches.length > 0 && (
+                <div>
+                  <div className="font-medium text-green-600 mb-1">✓ Matching Skills:</div>
+                  <div className="flex flex-wrap gap-1">
+                    {matchDetails.skillMatches.slice(0, 8).map((skill, index) => (
+                      <Badge key={index} variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                        {skill}
+                      </Badge>
+                    ))}
+                    {matchDetails.skillMatches.length > 8 && (
+                      <span className="text-xs text-muted-foreground">+{matchDetails.skillMatches.length - 8} more</span>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {matchDetails.skillMisses.length > 0 && (
+                <div>
+                  <div className="font-medium text-orange-600 mb-1">! Missing Skills:</div>
+                  <div className="flex flex-wrap gap-1">
+                    {matchDetails.skillMisses.slice(0, 6).map((skill, index) => (
+                      <Badge key={index} variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
+                        {skill}
+                      </Badge>
+                    ))}
+                    {matchDetails.skillMisses.length > 6 && (
+                      <span className="text-xs text-muted-foreground">+{matchDetails.skillMisses.length - 6} more</span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {type === 'developer' && matchDetails.boostScore && matchDetails.boostScore > 0 && (
+                <div className="pt-1 border-t">
+                  <span className="font-medium text-blue-600">Profile Boost: +{matchDetails.boostScore}%</span>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Extra points for GitHub activity and complete profile
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
 
   const fetchItems = useCallback(async () => {
     // For developers, don't fetch if no project is selected
@@ -243,7 +332,11 @@ export default function DiscoveryFeed({ type }: DiscoveryFeedProps) {
               )}
             </div>
           </div>
-          <Badge variant="secondary">{project.matchScore}% match</Badge>
+          <MatchTooltip 
+            matchDetails={project.matchDetails} 
+            matchScore={project.matchScore} 
+            type="project" 
+          />
         </div>
         <CardTitle className="text-xl">{project.title}</CardTitle>
         <CardDescription className="line-clamp-3">{project.description}</CardDescription>
@@ -308,7 +401,11 @@ export default function DiscoveryFeed({ type }: DiscoveryFeedProps) {
               )}
             </div>
           </div>
-          <Badge variant="secondary">{developer.matchScore}% match</Badge>
+          <MatchTooltip 
+            matchDetails={developer.matchDetails} 
+            matchScore={developer.matchScore} 
+            type="developer" 
+          />
         </div>
         {developer.bio && (
           <CardDescription className="line-clamp-3">{developer.bio}</CardDescription>
@@ -322,7 +419,7 @@ export default function DiscoveryFeed({ type }: DiscoveryFeedProps) {
               {developer.skills.slice(0, 8).map((skill) => (
                 <Badge 
                   key={skill.name} 
-                  variant={developer.skillMatches?.includes(skill.name.toLowerCase()) ? "default" : "outline"}
+                  variant={developer.matchDetails?.skillMatches?.includes(skill.name.toLowerCase()) ? "default" : "outline"}
                   className="text-xs"
                 >
                   {skill.name}
