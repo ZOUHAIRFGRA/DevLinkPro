@@ -71,18 +71,19 @@ interface ProjectWithDetails {
 }
 
 interface ProjectPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
   const session = await auth();
+  const { id } = await params;
 
   await connectDB();
 
   // Fetch project with populated data
-  const project = await Project.findById(params.id)
+  const project = await Project.findById(id)
     .populate('owner', 'name email image githubData.username')
     .populate({
       path: 'applicants.user',

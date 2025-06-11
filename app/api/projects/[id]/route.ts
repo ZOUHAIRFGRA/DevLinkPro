@@ -5,13 +5,13 @@ import Project from '@/models/project';
 import User from '@/models/user';
 
 interface RouteParams {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 // GET - Fetch a specific project
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     await connectDB();
 
@@ -85,7 +85,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
 
     await connectDB();
@@ -150,7 +150,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     await connectDB();
 

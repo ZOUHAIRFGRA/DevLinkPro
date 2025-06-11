@@ -5,7 +5,7 @@ import Project from '@/models/project';
 import User from '@/models/user';
 
 interface RouteParams {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 // POST - Apply to a project
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const { id } = params;
+    const { id } = await params;
     const { roleAppliedFor, message } = await request.json();
 
     if (!roleAppliedFor) {
@@ -119,7 +119,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const { id } = params;
+    const { id } = await params;
     const { applicantId, status, role } = await request.json();
 
     if (!applicantId || !status || !['Accepted', 'Rejected'].includes(status)) {

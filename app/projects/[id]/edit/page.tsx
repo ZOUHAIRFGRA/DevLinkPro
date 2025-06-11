@@ -6,9 +6,9 @@ import Project from '@/models/project';
 import CreateProjectForm from '@/components/projects/create-project-form';
 
 interface ProjectEditPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function ProjectEditPage({ params }: ProjectEditPageProps) {
@@ -17,10 +17,12 @@ export default async function ProjectEditPage({ params }: ProjectEditPageProps) 
     redirect('/auth/sign-in');
   }
 
+  const { id } = await params;
+
   await connectDB();
 
   // Fetch the project
-  const project = await Project.findById(params.id).lean();
+  const project = await Project.findById(id).lean();
   
   if (!project) {
     notFound();

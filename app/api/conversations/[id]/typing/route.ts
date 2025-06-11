@@ -2,14 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { pusherServer } from '@/lib/pusher';
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const conversationId = params.id;
+    const { id } = await params;
+    const conversationId = id;
     const { isTyping } = await request.json();
 
     // Trigger typing indicator via Pusher

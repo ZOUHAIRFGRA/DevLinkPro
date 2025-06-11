@@ -270,7 +270,7 @@ async function fetchDatabaseProfileByUsername(username: string) {
 }
 
 interface ProfilePageProps {
-  params: { username: string };
+  params: Promise<{ username: string }>;
 }
 
 export default async function ProfilePage({ params }: ProfilePageProps) {
@@ -280,7 +280,8 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     redirect("/auth/sign-in");
   }
 
-  const viewingUsername = params.username;
+  const { username } = await params;
+  const viewingUsername = username;
   const isOwnProfile = session.githubLogin === viewingUsername;
 
   let profile;

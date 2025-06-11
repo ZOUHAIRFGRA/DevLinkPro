@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -61,7 +61,7 @@ export default function ProjectsListing({ isAuthenticated }: ProjectsListingProp
     status: ''
   });
 
-  const fetchProjects = async () => {
+  const fetchProjects = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -95,11 +95,11 @@ export default function ProjectsListing({ isAuthenticated }: ProjectsListingProp
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   useEffect(() => {
     fetchProjects();
-  }, [filters]); // fetchProjects is stable and doesn't need to be in dependencies
+  }, [fetchProjects]);
 
   const handleFiltersChange = (newFilters: IProjectFilters) => {
     setFilters(newFilters);
