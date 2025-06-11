@@ -219,7 +219,7 @@ export default function ChatLayout({ children, activeConversationId }: ChatLayou
       
       {/* Conversations Sidebar */}
       <div className={`
-        w-full md:w-80 border-r bg-card
+        w-full md:w-80 border-r bg-card rounded-xl pt-3
         ${showMobileChat ? 'hidden md:block' : 'block'}
       `}>
         <ConversationsList />
