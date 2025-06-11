@@ -11,8 +11,23 @@ import {
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { ModeToggle } from "./mode-toggle";
+import { auth, signOut } from "@/auth";
+import { 
+  User, 
+  Settings, 
+  LogOut, 
+  LayoutDashboard, 
+  Target, 
+  Search, 
+  Heart,
+  Code,
+  MessageSquare 
+} from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-export function MobileNav() {
+export async function MobileNav() {
+  const session = await auth();
+
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -28,132 +43,152 @@ export function MobileNav() {
             Connect, Collaborate, Code
           </SheetDescription>
         </SheetHeader>
-        <nav className="flex flex-col gap-4 py-4">
+        <nav className="flex flex-col gap-4 py-4 pl-4">
+          {/* Main Navigation */}
           <div>
-            <h3 className="mb-2 text-lg font-semibold">Features</h3>
-            <ul className="grid gap-2">
-              <li>
-                <Link 
-                  href="#" 
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  Developer Profiles
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  href="#" 
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  Project Matching
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  href="#" 
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  Skill Verification
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  href="#" 
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  Collaboration Tools
-                </Link>
-              </li>
-            </ul>
-          </div>
-          <Separator />
-          <div>
-            <h3 className="mb-2 text-lg font-semibold">Resources</h3>
-            <ul className="grid gap-2">
-              <li>
-                <Link 
-                  href="#" 
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  Documentation
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  href="#" 
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  Blog
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  href="#" 
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  Community
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  href="#" 
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  Support
-                </Link>
-              </li>
-            </ul>
-          </div>
-          <Separator />
-          <div>
-            <h3 className="mb-2 text-lg font-semibold">Main Pages</h3>
-            <ul className="grid gap-2">
+            <h3 className="mb-3 text-lg font-semibold">Navigation</h3>
+            <ul className="grid gap-3 pl-2">
               <li>
                 <Link 
                   href="/projects" 
-                  className="text-muted-foreground hover:text-foreground"
+                  className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
                 >
+                  <Code className="h-4 w-4" />
                   Browse Projects
                 </Link>
               </li>
-              <li>
-                <Link 
-                  href="/developers" 
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  Find Developers
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  href="/discovery" 
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  Discovery
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  href="/matches" 
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  Matches
-                </Link>
-              </li>
+              {session && (
+                <>
+                  <li>
+                    <Link 
+                      href="/discovery" 
+                      className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <Search className="h-4 w-4" />
+                      Discovery
+                    </Link>
+                  </li>
+                  <li>
+                    <Link 
+                      href="/matches" 
+                      className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <Heart className="h-4 w-4" />
+                      Matches
+                    </Link>
+                  </li>
+                  <li>
+                    <Link 
+                      href="/applications" 
+                      className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <Target className="h-4 w-4" />
+                      Applications
+                    </Link>
+                  </li>
+                  <li>
+                    <Link 
+                      href="/dashboard" 
+                      className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <LayoutDashboard className="h-4 w-4" />
+                      Dashboard
+                    </Link>
+                  </li>
+                  <li>
+                    <Link 
+                      href="/chat" 
+                      className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                      Chats
+                    </Link>
+                  </li>
+                </>
+              )}
             </ul>
           </div>
+
+          {session && (
+            <>
+              <Separator />
+              
+              {/* User Profile Section */}
+              <div>
+                <h3 className="mb-3 text-lg font-semibold">Account</h3>
+                <div className="flex items-center gap-3 mb-4 pl-2">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={session.user?.image || ""} alt={session.user?.name || ""} />
+                    <AvatarFallback>
+                      {session.user?.name?.charAt(0) || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col">
+                    <p className="text-sm font-medium leading-none">
+                      {session.user?.name}
+                    </p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {session.user?.email}
+                    </p>
+                  </div>
+                </div>
+                <ul className="grid gap-3 pl-2">
+                  <li>
+                    <Link 
+                      href="/profile" 
+                      className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <User className="h-4 w-4" />
+                      Profile
+                    </Link>
+                  </li>
+                  <li>
+                    <Link 
+                      href="/settings" 
+                      className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <Settings className="h-4 w-4" />
+                      Settings
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+            </>
+          )}
+          
           <Separator />
-          <div className="flex flex-col gap-2 mt-4">
-            <div className="flex justify-between items-center mb-2">
+          
+          {/* Theme and Authentication */}
+          <div className="pl-2">
+            <div className="flex justify-between items-center mb-4">
               <span className="text-sm font-medium">Theme</span>
               <ModeToggle />
             </div>
-            <Button variant="outline" className="w-full">
-              Log in
-            </Button>
-            <Button className="w-full">
-              Sign up
-            </Button>
+            
+            {session ? (
+              <form action={async () => {
+                "use server";
+                await signOut();
+              }}>
+                <Button 
+                  type="submit" 
+                  variant="outline" 
+                  className="w-full flex items-center gap-2"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Log out
+                </Button>
+              </form>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <Button variant="outline" className="w-full" asChild>
+                  <Link href="/auth/sign-in">Log in</Link>
+                </Button>
+                <Button className="w-full" asChild>
+                  <Link href="/auth/sign-up">Sign up</Link>
+                </Button>
+              </div>
+            )}
           </div>
         </nav>
       </SheetContent>
