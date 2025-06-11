@@ -89,7 +89,7 @@ export default function NewChatDialog({ onConversationCreated }: NewChatDialogPr
         if (onConversationCreated) {
           onConversationCreated(conversationId);
         } else {
-          router.push(`/chats/${conversationId}`);
+          router.push(`/chat/${conversationId}`);
         }
       } else {
         toast.error('Failed to create chat');

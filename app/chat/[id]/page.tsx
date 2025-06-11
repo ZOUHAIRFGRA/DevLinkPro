@@ -12,12 +12,10 @@ export default async function ChatConversationPage({ params }: ChatConversationP
   const { id } = await params;
   
   return (
-    <div className="h-screen">
-      <Suspense fallback={<div>Loading chat...</div>}>
-        <ChatLayout activeConversationId={id}>
-          <ConversationChat conversationId={id} />
-        </ChatLayout>
-      </Suspense>
-    </div>
+    <Suspense fallback={<div>Loading chat...</div>}>
+      <ChatLayout activeConversationId={id}>
+        <ConversationChat conversationId={id} />
+      </ChatLayout>
+    </Suspense>
   );
 }

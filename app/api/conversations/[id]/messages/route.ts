@@ -8,15 +8,15 @@ import mongoose from 'mongoose';
 import { pusherServer } from '@/lib/pusher';
 
 // GET - Get messages for a conversation
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { id: conversationId } = await params;
     const { searchParams } = new URL(request.url);
-    const conversationId = searchParams.get('conversationId');
     const limit = parseInt(searchParams.get('limit') || '50');
     const page = parseInt(searchParams.get('page') || '1');
 
@@ -85,14 +85,15 @@ export async function GET(request: NextRequest) {
 }
 
 // POST - Send a message to a conversation
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { conversationId, content, messageType = 'text' } = await request.json();
+    const { id: conversationId } = await params;
+    const { content, messageType = 'text' } = await request.json();
 
     if (!conversationId || !content) {
       return NextResponse.json({ error: 'Conversation ID and content are required' }, { status: 400 });

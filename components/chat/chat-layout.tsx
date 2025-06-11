@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { MessageCircle, Users, User } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { MessageCircle, Users, User, ArrowLeft } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { useRouter } from 'next/navigation';
 import NewChatDialog from './new-chat-dialog';
 
 interface Conversation {
@@ -36,10 +38,17 @@ interface ChatLayoutProps {
 export default function ChatLayout({ children, activeConversationId }: ChatLayoutProps) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showMobileChat, setShowMobileChat] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     fetchConversations();
   }, []);
+
+  // Check if we're on mobile and have an active conversation
+  useEffect(() => {
+    setShowMobileChat(!!activeConversationId);
+  }, [activeConversationId]);
 
   const fetchConversations = async () => {
     try {
@@ -75,107 +84,153 @@ export default function ChatLayout({ children, activeConversationId }: ChatLayou
   const handleConversationCreated = (conversationId: string) => {
     // Refresh conversations list and navigate
     fetchConversations();
-    window.location.href = `/chats/${conversationId}`;
+    router.push(`/chat/${conversationId}`);
   };
 
-  return (
-    <div className="h-screen flex bg-background">
-      {/* Conversations Sidebar */}
-      <div className="w-80 border-r bg-card">
-        <div className="p-4 border-b">
-          <h2 className="text-lg font-semibold">Chats</h2>
-          <p className="text-sm text-muted-foreground">
-            {conversations.length} conversations
-          </p>
-        </div>
-        
-        <ScrollArea className="h-[calc(100vh-8rem)]">
-          <div className="p-2">
-            {loading ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Loading conversations...
-              </div>
-            ) : conversations.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No conversations yet</p>
-                <p className="text-xs mt-2">
-                  Start by creating a new chat below
-                </p>
-              </div>
-            ) : (
-              conversations.map((conversation) => (
-                <a
-                  key={conversation._id}
-                  href={`/chats/${conversation._id}`}
-                  className={`block p-3 rounded-lg hover:bg-muted transition-colors mb-2 ${
-                    activeConversationId === conversation._id ? 'bg-muted border' : ''
-                  }`}
-                >
-                  <div className="flex items-start space-x-3">
-                    <div className="relative">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage src={getConversationAvatar(conversation) || undefined} />
-                        <AvatarFallback>
-                          {conversation.type === 'project_group' ? (
-                            <Users className="h-6 w-6" />
-                          ) : (
-                            <User className="h-6 w-6" />
-                          )}
-                        </AvatarFallback>
-                      </Avatar>
-                      {conversation.type === 'project_group' && (
-                        <div className="absolute -bottom-1 -right-1 bg-primary rounded-full p-1">
-                          <Users className="h-3 w-3 text-primary-foreground" />
-                        </div>
-                      )}
+  const handleBackToList = () => {
+    router.push('/chat');
+  };
+
+  const ConversationsList = () => (
+    <div className="flex flex-col h-full">
+      <div className="p-4 border-b bg-card">
+        <h2 className="text-lg font-semibold">Chats</h2>
+        <p className="text-sm text-muted-foreground">
+          {conversations.length} conversations
+        </p>
+      </div>
+      
+      <ScrollArea className="flex-1">
+        <div className="p-2">
+          {loading ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Loading conversations...
+            </div>
+          ) : conversations.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>No conversations yet</p>
+              <p className="text-xs mt-2">
+                Start by creating a new chat below
+              </p>
+            </div>
+          ) : (
+            conversations.map((conversation) => (
+              <a
+                key={conversation._id}
+                href={`/chat/${conversation._id}`}
+                className={`block p-3 rounded-lg hover:bg-muted transition-colors mb-2 ${
+                  activeConversationId === conversation._id ? 'bg-muted border' : ''
+                }`}
+              >
+                <div className="flex items-start space-x-3">
+                  <div className="relative">
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage src={getConversationAvatar(conversation) || undefined} />
+                      <AvatarFallback>
+                        {conversation.type === 'project_group' ? (
+                          <Users className="h-6 w-6" />
+                        ) : (
+                          <User className="h-6 w-6" />
+                        )}
+                      </AvatarFallback>
+                    </Avatar>
+                    {conversation.type === 'project_group' && (
+                      <div className="absolute -bottom-1 -right-1 bg-primary rounded-full p-1">
+                        <Users className="h-3 w-3 text-primary-foreground" />
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-medium truncate">
+                        {getConversationName(conversation)}
+                      </h3>
+                      <div className="flex items-center space-x-1">
+                        <Badge variant="secondary" className="text-xs">
+                          {conversation.type === 'project_group' ? 'Group' : 'Private'}
+                        </Badge>
+                      </div>
                     </div>
                     
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-medium truncate">
-                          {getConversationName(conversation)}
-                        </h3>
-                        <div className="flex items-center space-x-1">
-                          <Badge variant="secondary" className="text-xs">
-                            {conversation.type === 'project_group' ? 'Group' : 'Private'}
-                          </Badge>
-                        </div>
-                      </div>
-                      
-                      {conversation.lastMessage && (
-                        <p className="text-sm text-muted-foreground truncate mt-1">
-                          {conversation.lastMessage.content}
-                        </p>
-                      )}
-                      
-                      <div className="flex items-center justify-between mt-2">
+                    {conversation.lastMessage && (
+                      <p className="text-sm text-muted-foreground truncate mt-1">
+                        {conversation.lastMessage.content}
+                      </p>
+                    )}
+                    
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-xs text-muted-foreground">
+                        {conversation.participants.length} participant{conversation.participants.length > 1 ? 's' : ''}
+                      </span>
+                      {conversation.lastActivity && (
                         <span className="text-xs text-muted-foreground">
-                          {conversation.participants.length} participant{conversation.participants.length > 1 ? 's' : ''}
+                          {formatDistanceToNow(new Date(conversation.lastActivity), { addSuffix: true })}
                         </span>
-                        {conversation.lastActivity && (
-                          <span className="text-xs text-muted-foreground">
-                            {formatDistanceToNow(new Date(conversation.lastActivity), { addSuffix: true })}
-                          </span>
-                        )}
-                      </div>
+                      )}
                     </div>
                   </div>
-                </a>
-              ))
-            )}
-          </div>
-        </ScrollArea>
-        
-        {/* New Chat Button */}
-        <div className="p-4 border-t">
-          <NewChatDialog onConversationCreated={handleConversationCreated} />
+                </div>
+              </a>
+            ))
+          )}
         </div>
+      </ScrollArea>
+      
+      {/* New Chat Button */}
+      <div className="p-4 border-t">
+        <NewChatDialog onConversationCreated={handleConversationCreated} />
+      </div>
+    </div>
+  );
+
+  const ChatContent = () => (
+    <div className="flex flex-col h-full">
+      {/* Mobile Header with Back Button */}
+      {activeConversationId && (
+        <div className="md:hidden flex items-center p-4 border-b bg-card">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleBackToList}
+            className="mr-3 p-1"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h3 className="font-medium">
+            {conversations.find(c => c._id === activeConversationId) && 
+             getConversationName(conversations.find(c => c._id === activeConversationId)!)}
+          </h3>
+        </div>
+      )}
+      
+      {/* Chat Messages Area */}
+      <div className="flex-1">
+        {children}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="h-[calc(100vh-3.5rem)] md:h-[calc(100vh-3.5rem)] flex bg-background">
+      {/* Desktop: Always show both sidebar and chat */}
+      {/* Mobile: Show either sidebar or chat based on selection */}
+      
+      {/* Conversations Sidebar */}
+      <div className={`
+        w-full md:w-80 border-r bg-card
+        ${showMobileChat ? 'hidden md:block' : 'block'}
+      `}>
+        <ConversationsList />
       </div>
 
       {/* Chat Content */}
-      <div className="flex-1 flex flex-col">
-        {children}
+      <div className={`
+        w-full md:flex-1 flex flex-col
+        ${!showMobileChat ? 'hidden md:flex' : 'flex'}
+      `}>
+        <ChatContent />
       </div>
     </div>
   );
