@@ -105,9 +105,9 @@ export default function NewChatDialog({ onConversationCreated }: NewChatDialogPr
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="w-full" size="sm">
-          <Plus className="h-4 w-4 mr-2" />
-          New Chat
+        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+          <Plus className="h-4 w-4" />
+          <span className="sr-only">New Chat</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">

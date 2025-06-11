@@ -92,15 +92,20 @@ export default function ChatLayout({ children, activeConversationId }: ChatLayou
   };
 
   const ConversationsList = () => (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-[600px]">
       <div className="p-4 border-b bg-card">
-        <h2 className="text-lg font-semibold">Chats</h2>
-        <p className="text-sm text-muted-foreground">
-          {conversations.length} conversations
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold">Chats</h2>
+            <p className="text-sm text-muted-foreground">
+              {conversations.length} conversations
+            </p>
+          </div>
+          <NewChatDialog onConversationCreated={handleConversationCreated} />
+        </div>
       </div>
       
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 h-[500px]">
         <div className="p-2">
           {loading ? (
             <div className="text-center py-8 text-muted-foreground">
@@ -177,19 +182,14 @@ export default function ChatLayout({ children, activeConversationId }: ChatLayou
           )}
         </div>
       </ScrollArea>
-      
-      {/* New Chat Button */}
-      <div className="p-4 border-t">
-        <NewChatDialog onConversationCreated={handleConversationCreated} />
-      </div>
     </div>
   );
 
   const ChatContent = () => (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-[600px]">
       {/* Mobile Header with Back Button */}
       {activeConversationId && (
-        <div className="md:hidden flex items-center p-4 border-b bg-card">
+        <div className="md:hidden flex items-center p-3 border-b bg-card mb-2 rounded-t-lg">
           <Button
             variant="ghost"
             size="sm"
@@ -213,7 +213,7 @@ export default function ChatLayout({ children, activeConversationId }: ChatLayou
   );
 
   return (
-    <div className="h-[calc(100vh-3.5rem)] md:h-[calc(100vh-3.5rem)] flex bg-background">
+    <div className="flex bg-background min-h-[600px] max-w-full mt-4 p-4">
       {/* Desktop: Always show both sidebar and chat */}
       {/* Mobile: Show either sidebar or chat based on selection */}
       

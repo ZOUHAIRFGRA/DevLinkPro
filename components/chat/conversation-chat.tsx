@@ -274,10 +274,10 @@ export default function ConversationChat({ conversationId }: ConversationChatPro
   }
 
   return (
-    <div className="flex flex-col h-full max-h-full min-h-0 overflow-hidden">
+    <div className="flex flex-col h-[500px] max-h-[500px] border rounded-lg bg-background mt-2">
       {/* Messages */}
-      <ScrollArea ref={scrollAreaRef} className="flex-1 min-h-0 overflow-hidden">
-        <div className="space-y-4 p-4">
+      <ScrollArea ref={scrollAreaRef} className="flex-1 h-[420px] overflow-hidden">
+        <div className="space-y-4 p-4 pb-6">
           {messages.map((message) => {
             // Safety check for senderId
             if (!message.senderId || !message.senderId._id) {
@@ -378,7 +378,7 @@ export default function ConversationChat({ conversationId }: ConversationChatPro
       </ScrollArea>
 
       {/* Message Input - Fixed at bottom */}
-      <div className="flex-shrink-0 p-4 border-t bg-background">
+      <div className="flex-shrink-0 h-[80px] p-4 border-t bg-background">
         <form onSubmit={sendMessage} className="flex gap-2">
           <Input
             value={newMessage}
