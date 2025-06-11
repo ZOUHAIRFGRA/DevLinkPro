@@ -20,7 +20,7 @@ interface Message {
     _id: string;
     name: string;
     image?: string;
-  };
+  } | null;
   conversationId?: string;
   matchId?: string; // Legacy support
   messageType: 'text' | 'image' | 'file' | 'system';
@@ -83,7 +83,18 @@ export default function ConversationChat({ conversationId }: ConversationChatPro
         const response = await fetch(`/api/conversations/${conversationId}/messages`);
         if (response.ok) {
           const data = await response.json();
-          setMessages(data.messages || []);
+          const messages = data.messages || [];
+          
+          // Filter out messages with invalid senderId
+          const validMessages = messages.filter((message: Message) => {
+            if (!message.senderId || !message.senderId._id) {
+              console.warn('Filtering out message with invalid senderId:', message);
+              return false;
+            }
+            return true;
+          });
+          
+          setMessages(validMessages);
         } else {
           toast.error('Failed to load messages');
         }
@@ -108,7 +119,15 @@ export default function ConversationChat({ conversationId }: ConversationChatPro
     const channel = pusherClient.subscribe(channelName);
 
     // New message handler
-    const handleNewMessage = (message: Message) => {
+    const handleNewMessage = (data: { message: Message; conversationId: string }) => {
+      const message = data.message;
+      
+      // Ensure the message has proper structure
+      if (!message || !message.senderId || !message.senderId._id) {
+        console.warn('Received message without proper senderId:', data);
+        return;
+      }
+
       setMessages(prev => {
         // Avoid duplicates
         if (prev.some(m => m._id === message._id)) {
@@ -179,7 +198,10 @@ export default function ConversationChat({ conversationId }: ConversationChatPro
     if (scrollAreaRef.current) {
       const scrollElement = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
       if (scrollElement) {
-        scrollElement.scrollTop = scrollElement.scrollHeight;
+        // Small delay to ensure DOM is updated
+        setTimeout(() => {
+          scrollElement.scrollTop = scrollElement.scrollHeight;
+        }, 10);
       }
     }
   }, [messages]);
@@ -252,82 +274,89 @@ export default function ConversationChat({ conversationId }: ConversationChatPro
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full max-h-full min-h-0 overflow-hidden">
       {/* Messages */}
-      <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
-        <div className="space-y-4">
-          {messages.map((message) => (
-            <div
-              key={message._id}
-              className={`flex items-start gap-3 ${
-                message.senderId._id === session?.user?.id ? 'flex-row-reverse' : ''
-              }`}
-            >
-              <Avatar className="w-8 h-8">
-                <AvatarImage src={message.senderId.image} />
-                <AvatarFallback>
-                  {message.senderId.name?.slice(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              
-              <div className={`flex flex-col ${message.senderId._id === session?.user?.id ? 'items-end' : ''}`}>
-                <Card className={`max-w-xs sm:max-w-md ${message.senderId._id === session?.user?.id ? 'bg-primary text-primary-foreground' : ''}`}>
-                  <CardContent className="p-3">
-                    <p className="text-sm break-words">{message.content}</p>
-                    
-                    {/* Reactions */}
-                    {message.reactions.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {message.reactions.reduce((acc, reaction) => {
-                          const existing = acc.find(r => r.emoji === reaction.emoji);
-                          if (existing) {
-                            existing.count++;
-                            existing.users.push(reaction.userName);
-                          } else {
-                            acc.push({
-                              emoji: reaction.emoji,
-                              count: 1,
-                              users: [reaction.userName]
-                            });
-                          }
-                          return acc;
-                        }, [] as Array<{ emoji: string; count: number; users: string[] }>).map((reaction) => (
-                          <Badge
-                            key={reaction.emoji}
-                            variant="secondary"
-                            className="text-xs cursor-pointer hover:bg-secondary/80"
-                            onClick={() => addReaction(message._id, reaction.emoji)}
-                            title={reaction.users.join(', ')}
-                          >
-                            {reaction.emoji} {reaction.count}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+      <ScrollArea ref={scrollAreaRef} className="flex-1 min-h-0 overflow-hidden">
+        <div className="space-y-4 p-4">
+          {messages.map((message) => {
+            // Safety check for senderId
+            if (!message.senderId || !message.senderId._id) {
+              console.warn('Message missing senderId:', message);
+              return null;
+            }
+
+            return (
+              <div
+                key={message._id}
+                className={`flex items-start gap-3 ${
+                  message.senderId._id === session?.user?.id ? 'flex-row-reverse' : ''
+                }`}
+              >
+                <Avatar className="w-8 h-8 flex-shrink-0">
+                  <AvatarImage src={message.senderId.image} />
+                  <AvatarFallback>
+                    {message.senderId.name?.slice(0, 2).toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
                 
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-xs text-muted-foreground">
-                    {message.senderId._id !== session?.user?.id ? message.senderId.name : 'You'}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
-                  </span>
+                <div className={`flex flex-col min-w-0 ${message.senderId._id === session?.user?.id ? 'items-end' : ''}`}>
+                  <Card className={`max-w-xs sm:max-w-md ${message.senderId._id === session?.user?.id ? 'bg-primary text-primary-foreground' : ''}`}>
+                    <CardContent className="p-3">
+                      <p className="text-sm break-words">{message.content}</p>
+                      
+                      {/* Reactions */}
+                      {message.reactions && message.reactions.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {message.reactions.reduce((acc, reaction) => {
+                            const existing = acc.find(r => r.emoji === reaction.emoji);
+                            if (existing) {
+                              existing.count++;
+                              existing.users.push(reaction.userName);
+                            } else {
+                              acc.push({
+                                emoji: reaction.emoji,
+                                count: 1,
+                                users: [reaction.userName]
+                              });
+                            }
+                            return acc;
+                          }, [] as Array<{ emoji: string; count: number; users: string[] }>).map((reaction) => (
+                            <Badge
+                              key={reaction.emoji}
+                              variant="secondary"
+                              className="text-xs cursor-pointer hover:bg-secondary/80"
+                              onClick={() => addReaction(message._id, reaction.emoji)}
+                              title={reaction.users.join(', ')}
+                            >
+                              {reaction.emoji} {reaction.count}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}                    </CardContent>
+                  </Card>
                   
-                  {/* Quick reaction button */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100"
-                    onClick={() => addReaction(message._id, '👍')}
-                  >
-                    <Smile className="h-3 w-3" />
-                  </Button>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-xs text-muted-foreground">
+                      {message.senderId._id !== session?.user?.id ? message.senderId.name : 'You'}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
+                    </span>
+                    
+                    {/* Quick reaction button */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100"
+                      onClick={() => addReaction(message._id, '👍')}
+                    >
+                      <Smile className="h-3 w-3" />
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          }).filter(Boolean)}
           
           {/* Typing indicator */}
           {typingUsers.length > 0 && (
@@ -348,8 +377,8 @@ export default function ConversationChat({ conversationId }: ConversationChatPro
         </div>
       </ScrollArea>
 
-      {/* Message Input */}
-      <div className="p-4 border-t">
+      {/* Message Input - Fixed at bottom */}
+      <div className="flex-shrink-0 p-4 border-t bg-background">
         <form onSubmit={sendMessage} className="flex gap-2">
           <Input
             value={newMessage}
@@ -360,9 +389,14 @@ export default function ConversationChat({ conversationId }: ConversationChatPro
             placeholder="Type a message..."
             disabled={sending}
             className="flex-1"
+            autoComplete="off"
           />
-          <Button type="submit" disabled={!newMessage.trim() || sending}>
-            <Send className="h-4 w-4" />
+          <Button type="submit" disabled={!newMessage.trim() || sending} size="sm">
+            {sending ? (
+              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
           </Button>
         </form>
       </div>
